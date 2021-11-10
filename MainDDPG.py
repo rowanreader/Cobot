@@ -7,10 +7,10 @@ from Utils import plot_learning_curve
 
 if __name__ == '__main__':
     # env = Environment()
-    env = gym.make('Pendulum-v0') # placeholder
+    env = gym.make('Pendulum-v1') # placeholder
     # maxSize, inputShape, dim1, dim2, numJoints, batchSize, alpha, beta, gamma, noise
     agent = Agent(env.observation_space.shape, env, numActions=env.action_space.shape[0]) # just send in shape/size of observation (state, not action)
-    numGames = 250
+    numGames = 200
     figureFile = 'plots/pendulum.png'
 
     bestScore = env.reward_range[0]

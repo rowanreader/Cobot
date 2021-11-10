@@ -1,9 +1,13 @@
+#!/usr/bin/env python
 import cv2
 import numpy as np
 import pyrealsense2 as rs
+import rospy
+from std_msgs.msg import String
 
 def empty(img):
     pass
+
 
 # Configure depth and color streams
 pipeline = rs.pipeline()
@@ -16,7 +20,7 @@ device = pipeline_profile.get_device()
 device_product_line = str(device.get_info(rs.camera_info.product_line))
 
 # min framerate is 6
-frameRate = 60
+frameRate = 6
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, frameRate)
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, frameRate)
 pipeline.start(config)
@@ -38,11 +42,11 @@ maxObjArea = frameHeight*frameWidth/1.5 # if larger than this, can't detect
 # yellow = [12, 184, 62, 26, 255, 189]
 
 # in lab
-red = [0, 156, 71, 4, 255, 237]
-blue = [92, 154, 43, 112, 255, 204]
-white = [12, 0, 109, 75, 52, 255]
-black = [0, 0, 0, 178, 177, 80]
-yellow = [18, 108, 85, 34, 255, 243]
+red = [0, 152, 0, 5, 255, 255]
+blue = [89, 144, 74, 142, 255, 190]
+white = [0, 8, 121, 179, 49, 187]
+black = [0, 0, 0, 67, 200, 80]
+yellow = [10, 141, 131, 34, 255, 255]
 
 
 # colours to draw bounding box
@@ -52,8 +56,9 @@ yellowCol = (0, 255, 255)
 whiteCol = (255, 255, 255)
 blackCol = (0, 0, 0)
 
-# video = cv2.VideoCapture(2)
+#video = cv2.VideoCapture(2)
 
+# loop that gets stuff to send to ros
 while True:
     # depth part
     # Wait for a coherent pair of frames: depth and color
@@ -138,6 +143,7 @@ while True:
     cnts = cntsRed + cntsBlue + cntsYellow + cntsBlack + cntsWhite
     colours = cR + cB + cY + cK + cW
     count = 0
+    cntsForROS = []
     for c in cnts:
         area = cv2.contourArea(c)
         # print(area)
@@ -170,7 +176,6 @@ while True:
         count += 1
 
     cv2.imshow("Frame", img)
-
     # cv2.imshow("Depth", depth_image)
     # cv2.imshow("White Mask", maskWhite)
     # cv2.imshow("Black Mask", maskBlack)

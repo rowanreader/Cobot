@@ -139,6 +139,7 @@ def IK(goal, q):
 
     moviewriter.finish()
     print(count)
+    return q
 
 
 
