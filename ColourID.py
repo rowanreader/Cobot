@@ -148,7 +148,7 @@ setWhite = [12, 0, 109, 75, 52, 255]
 setBlack = [0,0,0, 104, 74, 98]
 setYellow = [18, 108, 85, 34, 255, 243]
 
-setCol = setRed
+setCol = setNeutral
 cv2.setTrackbarPos('h', 'result', setCol[0])
 cv2.setTrackbarPos('s', 'result', setCol[1])
 cv2.setTrackbarPos('v', 'result', setCol[2])
