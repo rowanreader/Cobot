@@ -2,10 +2,12 @@ import random
 import numpy as np
 import sys
 
+printstuff = False
+rad = 10
+
 # spots have diameter = 20 mm, rad = 10 mm
 # pillars have diameter = 12 mm, rad = 6 mm
 # pillars have height of 45 mm
-rad = 10
 
 # given a coordinate according to local origin, world origin (where (0,0) is in world coords) and rotation matrix,
 # transform coordinate from local system to world
@@ -68,9 +70,21 @@ def getClusters(spots, filled, numClusters):
     minX = int(min(pillars, key=lambda x:x[0])[0])
     minY = int(min(pillars, key=lambda x:x[1])[1])
 
+    if numClusters > len(range(minX, maxX)): # sometime all spots have the same x or y coord
+        if printstuff:
+            print("XRange too small for clusters, defaulting to minX")
+        xs = [minX] * numClusters
+    else:
+        xs = random.sample(range(minX, maxX), numClusters)
+
+    if numClusters > len(range(minY, maxY)):
+        if printstuff:
+            print("XRange too small for clusters, defaulting to minY")
+        ys = [minY] * numClusters
     # randomly place numCluster points within the bounds of min/max
-    xs = random.sample(range(minX, maxX), numClusters)
-    ys = random.sample(range(minY, maxY), numClusters)
+    else:
+        ys = random.sample(range(minY, maxY), numClusters)
+
     origin = []
     for k in range(numClusters):
         origin.append([xs[k], ys[k]])
@@ -91,9 +105,11 @@ def getClusters(spots, filled, numClusters):
 
             error += np.sqrt(alpha*xDist**2 + alpha*yDist**2)
         count += 1
-    if count == 100:
-        print("100 iterations of cluster adjustment!")
-    print("Cluster error: " + str(error))
+    # if count == 100:
+    #     print("100 iterations of cluster adjustment!")
+    #     print("Error: " + str(error))
+    if printstuff == True:
+        print("Cluster error: " + str(error))
     return origin
 
 
@@ -156,34 +172,56 @@ tile18 = Tile([(-26, 32), (0, 9), (26, 32)]) # (R, K, Y)
 
 
 tiles = [tile01, tile02, tile03, tile04, tile05, tile06, tile07, tile08, tile09, tile10, tile11, tile12, tile13, tile14, tile15, tile16, tile17, tile18]
-# randomly choose 3 tiles and place in fixed origin spots
-firstFloorId = random.sample(range(0, 18), 3) # corresponds to index in tiles, so number 0 = tile01
-# firstFloorId = [2, 11, 15]
-firstFloors = [tiles[firstFloorId[0]], tiles[firstFloorId[1]], tiles[firstFloorId[2]]]
-print(firstFloorId)
-origin = [(300, -20), (400, -20), (370, 40)] # mm from origin of world coord
-count = 0
-for i in firstFloors:
-    i.origin = origin[count]
-    count += 1
-
 # takes in array of coordinates and binary array indicating whether they are occupied (1) or not (0)
 # returns all spots that are occupied
 def getOccupied(spots, filled):
-    temp = []
-    num = len(filled)
-    for i in range(num):
-        if filled[i] == 1:
-            temp.append(spots[i])
-    return temp
+    occupied = []
+    count1 = 0
+    for j in filled: # goes up to 3
+        temp = []
+        count2 = 0
+        num = len(j)
+        for i in range(num):
+            if j[i] == 1:
+                # spotsTemp = np.append(spots[count1][count2], count1)
+                spotsTemp = spots[count1][count2]
+                temp.append(spotsTemp)
+            count2 += 1
+        occupied.append(temp)
+        count1 += 1
+    if printstuff:
+        print("Occupied:")
+        print(occupied)
+    return occupied
 
 
 
 # builds random tower
+# returns occupied spots and origin of tiles
+# can make plane based on that
 def build():
+    allWorldSpots = []
+    allFilled = []
+    # randomly choose 3 tiles and place in fixed origin spots
+    firstFloorId = random.sample(range(0, 18), 3)  # corresponds to index in tiles, so number 0 = tile01
+    # firstFloorId = [2, 11, 15]
+    firstFloors = [tiles[firstFloorId[0]], tiles[firstFloorId[1]], tiles[firstFloorId[2]]]
+    if printstuff == True:
+        print(firstFloorId)
+    origin1 = [(700, 380), (800, 380), (770, 440)]  # mm from origin of world coord
+    count = 0
+    for i in firstFloors:
+        i.origin = origin1[count]
+        count += 1
+
+    origins = [origin1]
+
+
     # randomly choose level (1, 2, 3)
     levels = random.sample(range(1,4), 1)[0] # either 1 2 or 3
-    print("Going up to level " + str(levels))
+    levels = 3
+    if printstuff == True:
+        print("Going up to level " + str(levels))
     filledSpots = []
 
     # always going to have 1st level at least
@@ -194,7 +232,7 @@ def build():
     rotate = np.identity(2)
     angle = 0
     for spot in firstFloors[0].spots:
-        firstSpotsWorld.append(tupleTransform(spot, origin[0], rotate)) # gonna switch to arrays instead of tuples
+        firstSpotsWorld.append(tupleTransform(spot, origin1[0], rotate)) # gonna switch to arrays instead of tuples
     # check for collisions, if so, rotate all with different matrix. Repeat until no collisions
     # collisions = being less than 2 radii away from another point
     collide = True
@@ -204,7 +242,7 @@ def build():
     while collide:
         collide = False
         i = temp[count] # iterate through current tile in local coordinates
-        newCoord = tupleTransform(i, origin[1], rotate)
+        newCoord = tupleTransform(i, origin1[1], rotate)
         for j in firstSpotsWorld:
             if checkCollide(j, newCoord) == True:
 
@@ -212,18 +250,19 @@ def build():
                 count = 0 # have to reset and check against all coordinates again
                 # adjust rotation matrix
                 angle += 0.0872665
-                print("Rotate 1.2! " + str(angle))
+                if printstuff == True:
+                    print("Rotate 1.2! " + str(angle))
                 rotate = getRotateMat(angle)
                 if angle > np.pi:
                     print("no good position found for tile 1.2")
-                    sys.exit()
+                    return -1, -1, -1
                 break
             count += 1
     # made it all the way through without collision, set angle
     firstFloors[1].rotation = angle
     # add to world spots
     for spot in firstFloors[1].spots:
-        firstSpotsWorld.append(tupleTransform(spot, origin[1], rotate)) # just append, don't need to worry about distinguishing 1st and 2nd floor
+        firstSpotsWorld.append(tupleTransform(spot, origin1[1], rotate)) # just append, don't need to worry about distinguishing 1st and 2nd floor
 
 
     # on to the 3rd tile of 1st floor - pretty much same as 2nd tile
@@ -236,7 +275,7 @@ def build():
     while collide:
         collide = False
         i = temp[count]  # iterate through current tile in local coordinates
-        newCoord = tupleTransform(i, origin[2], rotate)
+        newCoord = tupleTransform(i, origin1[2], rotate)
         for j in firstSpotsWorld:
             if checkCollide(j, newCoord) == True:
 
@@ -244,21 +283,24 @@ def build():
                 count = 0  # have to reset and check against all coordinates again
                 # adjust rotation matrix
                 angle += 0.0872665
-                print("Rotate 1.3! " + str(angle))
+                if printstuff == True:
+                    print("Rotate 1.3! " + str(angle))
                 rotate = getRotateMat(angle)
                 if angle > np.pi:
                     print("no good position found for tile 1.3")
-                    sys.exit()
+                    return -1, -1, -1
                 break
             count += 1
     # made it all the way through without collision, set angle
     firstFloors[2].rotation = angle
     # add to world spots
     for spot in firstFloors[2].spots:
-        firstSpotsWorld.append(tupleTransform(spot, origin[1], rotate))  # just append, don't need to worry about distinguishing 1st and 2nd floor
+        firstSpotsWorld.append(tupleTransform(spot, origin1[1], rotate))  # just append, don't need to worry about distinguishing 1st and 2nd floor
 
+    allWorldSpots.append(firstSpotsWorld)
 
-    print("Spots level 1: " + str(firstSpotsWorld))
+    if printstuff == True:
+        print("Spots level 1: " + str(firstSpotsWorld))
     # randomly fill 1st level with pillars (dependent on level chosen -> higher = more)
     # for level 1: 0 - 100%, level 2: 50-100%, level 3: 80-100%
 
@@ -286,22 +328,33 @@ def build():
         for i in chosen1:
             filled1[i] = 1
 
-    occupied1 = getOccupied(firstSpotsWorld, filled1)
+    # requires 2D array
+    occupied1 = getOccupied([firstSpotsWorld], [filled1])
     filledSpots.append(occupied1)
+    allFilled.append(filled1)
 
+    # print("occupied" + str(occupied1))
     # now build second level (if applicable)
     if levels > 1:
 
         # for second floor either 2 or 3 tiles
         numTiles2 = random.sample(range(2, 4), 1)[0]
         secondFloorId = random.sample(range(0, 18), numTiles2)
-        print(secondFloorId)
+        if printstuff == True:
+            print(secondFloorId)
         secondFloors = []
         for i in secondFloorId:
             secondFloors.append(tiles[i])
 
         origin2 = getClusters(firstSpotsWorld, filled1, numTiles2)
-        print("Level 2 origins: " + str(origin2))
+
+        count = 0
+        for i in secondFloors:
+            i.origin = origin2[count]
+            count += 1
+        origins.append(origin2)
+        if printstuff == True:
+            print("Level 2 origins: " + str(origin2))
         # choose origin in center of triangle of pillars??? Given pillars and number of 'clusters' find centroids
         # orient so no collisions
         secondSpotsWorld = []
@@ -324,18 +377,19 @@ def build():
                     count = 0  # have to reset and check against all coordinates again
                     # adjust rotation matrix
                     angle += 0.0872665
-                    print("Rotate 2.2! " + str(angle))
+                    if printstuff == True:
+                        print("Rotate 2.2! " + str(angle))
                     rotate = getRotateMat(angle)
                     if angle > np.pi:
                         print("no good position found for tile 2.2")
-                        sys.exit()
+                        return -1, -1, -1
                     break
                 count += 1
         # made it all the way through without collision, set angle
         secondFloors[1].rotation = angle
         # add to world spots
         for spot in secondFloors[1].spots:
-            secondSpotsWorld.append(tupleTransform(spot, origin[1], rotate))  # just append, don't need to worry about distinguishing 1st and 2nd floor
+            secondSpotsWorld.append(tupleTransform(spot, origin2[1], rotate))  # just append, don't need to worry about distinguishing 1st and 2nd floor
 
         if numTiles2 == 3: # must add 3rd tile
             collide = True
@@ -353,11 +407,12 @@ def build():
                         count = 0  # have to reset and check against all coordinates again
                         # adjust rotation matrix
                         angle += 0.0872665
-                        print("Rotate 2.2! " + str(angle))
+                        if printstuff == True:
+                            print("Rotate 2.2! " + str(angle))
                         rotate = getRotateMat(angle)
                         if angle > np.pi:
                             print("no good position found for tile 2.3")
-                            sys.exit()
+                            return -1, -1, -1
                         break
                     count += 1
             # made it all the way through without collision, set angle
@@ -366,7 +421,9 @@ def build():
             for spot in secondFloors[2].spots:
                 secondSpotsWorld.append(tupleTransform(spot, origin2[2], rotate))  # just append, don't need to worry about distinguishing 1st and 2nd floor
 
-        print("Spots level 2: " + str(secondSpotsWorld))
+        allWorldSpots.append(secondSpotsWorld)
+        if printstuff == True:
+            print("Spots level 2: " + str(secondSpotsWorld))
 
         # fill in spots
         numPillars2 = len(secondSpotsWorld)
@@ -384,22 +441,29 @@ def build():
             for i in chosen2:
                 filled2[i] = 1
 
-        occupied2 = getOccupied(secondSpotsWorld, filled2)
+        occupied2 = getOccupied([secondSpotsWorld], [filled2])
         filledSpots.append(occupied2)
-
+        allFilled.append(filled2)
     
     # same as prev
     if levels > 2:
         # for third floor either 1 or 2 tiles
         numTiles3 = random.sample(range(1, 3), 1)[0]
         thirdFloorId = random.sample(range(0, 18), numTiles3)
-        print(thirdFloorId)
+        if printstuff == True:
+            print(thirdFloorId)
         thirdFloors = []
         for i in thirdFloorId:
             thirdFloors.append(tiles[i])
 
         origin3 = getClusters(secondSpotsWorld, filled2, numTiles3)
-        print("Level 3 origins: " + str(origin3))
+        count = 0
+        for i in firstFloors:
+            i.origin = origin1[count]
+            count += 1
+        origins.append(origin3)
+        if printstuff == True:
+            print("Level 3 origins: " + str(origin3))
         # choose origin in center of triangle of pillars??? Given pillars and number of 'clusters' find centroids
         # orient so no collisions
         thirdSpotsWorld = []
@@ -423,11 +487,12 @@ def build():
                         count = 0  # have to reset and check against all coordinates again
                         # adjust rotation matrix
                         angle += 0.0872665
-                        print("Rotate 3.2! " + str(angle))
+                        if printstuff == True:
+                            print("Rotate 3.2! " + str(angle))
                         rotate = getRotateMat(angle)
                         if angle > np.pi:
                             print("no good position found for tile 3.2")
-                            sys.exit()
+                            return -1, -1, -1
                         break
                     count += 1
             # made it all the way through without collision, set angle
@@ -436,23 +501,38 @@ def build():
             for spot in thirdFloors[1].spots:
                 thirdSpotsWorld.append(tupleTransform(spot, origin3[1], rotate))  # just append, don't need to worry about distinguishing 1st and 2nd floor
 
-        print("Spots level 3: " + str(thirdSpotsWorld))
+        allWorldSpots.append(thirdSpotsWorld)
+        if printstuff == True:
+            print("Spots level 3: " + str(thirdSpotsWorld))
 
         # randomly fill from 0 to 100%
         numPillars3 = len(thirdSpotsWorld)
         filled3 = np.zeros(numPillars3)
-
+        # need at least 1 free
         numChosen3 = random.sample(range(0, numPillars3), 1)[0]
         chosen3 = random.sample(range(0, numPillars3), numChosen3)
         for i in chosen3:
             filled3[i] = 1
 
-        occupied3 = getOccupied(thirdSpotsWorld, filled3)
+        occupied3 = getOccupied([thirdSpotsWorld], [filled3])
         filledSpots.append(occupied3)
+        allFilled.append(filled3)
 
-    print("All occupied spots:")
-    print(filledSpots)
 
+    if printstuff == True:
+        # print("All occupied spots:")
+        # print(filledSpots)
+        print("Origins:")
+        print(origins)
+        print("All Filled:")
+        print(allFilled)
+        print("All spots:")
+        print(allWorldSpots)
+        print("Occupied Final:")
+        getOccupied(allWorldSpots, allFilled)
+
+
+    return allWorldSpots, allFilled, origins
 # a = (5,10)
 # b = (7, 11)
 # origin = (20, 30)
@@ -463,6 +543,11 @@ def build():
 #
 # print(checkCollide(a, origin))
 # print(checkCollide(a,b))
+# try:
+#     for _ in range(10000):
+#         build()
+#
+# except Exception as e:
+#     print(e)
 
 build()
-

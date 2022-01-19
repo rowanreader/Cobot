@@ -5,10 +5,11 @@ import tensorflow.keras as keras
 from tensorflow.keras.optimizers import Adam
 from MemoryBuffer import ReplayBuffer
 from Networks import Actor, Critic
+import numpy as np
 
 # this is the parent class of Actor and Critic classes
 class Agent:
-    def __init__(self, inputShape, env, maxSize=1000000, dim1=512, dim2=512, numActions=3, batchSize=64, alpha=0.001,
+    def __init__(self, inputShape, env, maxSize=1000000, dim1=512, dim2=512, numActions=3, batchSize=64, alpha=0.0003,
                  beta=0.002, tau=0.005, gamma=0.99, noise=0.1):
 
         self.numActions = numActions
@@ -52,6 +53,10 @@ class Agent:
 
     # to store the specific state transition
     def record(self, state, action, reward, state_, endFlag):
+
+        state = np.reshape(state, [165], order='C')
+
+        state_ = np.reshape(state_, [165], order='C')
         self.memory.store(state, action, reward, state_, endFlag)
 
     def saveModels(self):
@@ -71,7 +76,7 @@ class Agent:
     # based on current state, choose action
     # if train is true, add noise to simulate reality, if false, don't
     def chooseAction(self, observation, train=True):
-
+        observation = np.reshape(observation, [165], order='C')
         state = tf.convert_to_tensor([observation], dtype=tf.float32) # the form needed for submitting to net
 
         # get actions = degrees to rotate for all joints
@@ -87,7 +92,6 @@ class Agent:
         # if memory bank not sufficiently filled, just return
         if self.memory.counter < self.batchSize:
             return
-
         state, action, reward, state_, flag = self.memory.sample(self.batchSize)
         states = tf.convert_to_tensor(state, dtype=tf.float32)
         actions = tf.convert_to_tensor(action, dtype=tf.float32)

@@ -1,17 +1,29 @@
 import gym
 import numpy as np
+
+import SawyerSim
 from Agents import Agent
 from Utils import plot_learning_curve
-#from Octomap import Environment
+from Environment import Environment
+import TowerSim as tower
 
+printMe = False
 
 if __name__ == '__main__':
-    # env = Environment()
-    env = gym.make('Pendulum-v1') # placeholder
-    # maxSize, inputShape, dim1, dim2, numJoints, batchSize, alpha, beta, gamma, noise
+
+    # transform = [400, 400, 100] # translate all points in the tower by this much
+    goal = [-1]
+    while goal[0] == -1:
+        spots, filled, origins = tower.build()
+        goal = SawyerSim.getGoal(spots, filled)
+        occupied = tower.getOccupied(spots, filled)
+
+    env = Environment(spots, filled, occupied, origins)
+    # env = gym.make('Pendulum-v1') # placeholder
+
     agent = Agent(env.observation_space.shape, env, numActions=env.action_space.shape[0]) # just send in shape/size of observation (state, not action)
-    numGames = 200
-    figureFile = 'plots/pendulum.png'
+    numGames = 100
+    figureFile = 'plots/LowLevel.png'
 
     bestScore = env.reward_range[0]
     scoreHistory = []
@@ -20,9 +32,11 @@ if __name__ == '__main__':
     if loadCheckpoint: # just use old one
         numSteps = 0
         while numSteps < agent.batchSize:
-            state = env.reset()
+            state = env.reset() # state is [self.occupied, self.origins, self.goal]
             action = env.action_space.sample() # choose action (random?)
             state_, reward, endFlag, info = env.step(action) # carry out action
+            if printMe:
+                print(action)
             agent.record(state, action, reward, state_, endFlag)
             numSteps += 1
         # now have enough in memory bank to sample/learn, modifies nets
@@ -32,20 +46,27 @@ if __name__ == '__main__':
     else:
         evaluate = False
 
+    thresh = 300
     for i in range(numGames):
         state = env.reset()
         endFlag = False
         score = 0
+        count = 0
         # go until end of episode (either failure or success)
-        while not endFlag:
+        while not endFlag and count < thresh:
             action = agent.chooseAction(state, evaluate)
-
+            if printMe:
+                print(action)
             state_, reward, endFlag, info = env.step(action) # observe effects of actions
             score += reward # track total score
             agent.record(state, action, reward, state_, endFlag)
             if not loadCheckpoint:
                 agent.learn()
             state = state_
+            count += 1
+        if count == thresh:
+            print("Took too long")
+            score += -2500 # essentially failed
         scoreHistory.append(score)
         aveScore = np.mean(scoreHistory[-100:]) # average of prev 100 entries
 
@@ -54,10 +75,13 @@ if __name__ == '__main__':
             if not loadCheckpoint:
                 agent.saveModels()
 
-        print('episode ', i, 'score %.1f' % score, 'avg score %.1f' % aveScore)
-
+        print('episode ', i, 'score %.1f' % score, 'avg score %.1f' % aveScore) # always print
+    if printMe:
+        print(env.goal)
     if not loadCheckpoint:
         x = [i + 1 for i in range(numGames)]
         plot_learning_curve(x, scoreHistory, figureFile)
+
+    env.close()
 
 

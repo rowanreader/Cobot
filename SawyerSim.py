@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as ani
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
+import TowerSim as tower
+import random
+import sys
+
 
 # given joints and end effector position, plot (also plot goal point if it's given)
 def plot(joints, endEffector, goal=None):
@@ -95,29 +99,192 @@ def Jacobian(angles):
     th4 = angles[3]
     th5 = angles[4]
     th6 = angles[5]
-    l1 = 317
-    l2 = 192.5
-    l3 = 400
-    l4 = 168.5
-    l5 = 400
-    l6 = 136.3
-    l7 = 133.75
+    l1 = 3170
+    l2 = 1925
+    l3 = 4000
+    l4 = 1685
+    l5 = 4000
+    l6 = 1363
+    l7 = 1337.5
     jacob = [[l4*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3)) - l5*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4)) - 81*np.sin(th1) + l6*(np.sin(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) - np.cos(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) - l7*(np.cos(th6)*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4)) + np.sin(th6)*(np.cos(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) + np.sin(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3)))) - l3*np.cos(th2)*np.sin(th1), l6*(np.sin(th5)*(np.cos(th1)*np.sin(th2)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th3)*np.cos(th4)) + np.cos(th1)*np.cos(th2)*np.cos(th5)*np.sin(th3)) - l7*(np.cos(th6)*(np.cos(th1)*np.cos(th4)*np.sin(th2) - np.cos(th1)*np.cos(th2)*np.cos(th3)*np.sin(th4)) + np.sin(th6)*(np.cos(th5)*(np.cos(th1)*np.sin(th2)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th3)*np.cos(th4)) - np.cos(th1)*np.cos(th2)*np.sin(th3)*np.sin(th5))) - l5*(np.cos(th1)*np.cos(th4)*np.sin(th2) - np.cos(th1)*np.cos(th2)*np.cos(th3)*np.sin(th4)) - l3*np.cos(th1)*np.sin(th2) - l4*np.cos(th1)*np.cos(th2)*np.sin(th3), l6*(np.cos(th5)*(np.sin(th1)*np.sin(th3) + np.cos(th1)*np.cos(th3)*np.sin(th2)) + np.cos(th4)*np.sin(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) - l4*(np.sin(th1)*np.sin(th3) + np.cos(th1)*np.cos(th3)*np.sin(th2)) + l7*(np.sin(th6)*(np.sin(th5)*(np.sin(th1)*np.sin(th3) + np.cos(th1)*np.cos(th3)*np.sin(th2)) - np.cos(th4)*np.cos(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) + np.cos(th6)*np.sin(th4)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) + l5*np.sin(th4)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3)),   l7*(np.cos(th6)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) + np.cos(th5)*np.sin(th6)*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4))) + l5*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) - l6*np.sin(th5)*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4)),   l6*(np.cos(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) + np.sin(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) + l7*np.sin(th6)*(np.sin(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) - np.cos(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))), -l7*(np.sin(th6)*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4)) + np.cos(th6)*(np.cos(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) + np.sin(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3)))), 0],
     [81*np.cos(th1) + l5*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4)) + l4*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3)) + l6*(np.sin(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) - np.cos(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) + l7*(np.cos(th6)*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4)) - np.sin(th6)*(np.cos(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) + np.sin(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3)))) + l3*np.cos(th1)*np.cos(th2),                                             -np.sin(th1)*(l3*np.sin(th2) + l4*np.cos(th2)*np.sin(th3) + l5*np.cos(th4)*np.sin(th2) - l5*np.cos(th2)*np.cos(th3)*np.sin(th4) - l6*np.cos(th2)*np.cos(th5)*np.sin(th3) + l7*np.cos(th4)*np.cos(th6)*np.sin(th2) - l6*np.sin(th2)*np.sin(th4)*np.sin(th5) - l6*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.sin(th5) - l7*np.cos(th2)*np.cos(th3)*np.cos(th6)*np.sin(th4) - l7*np.cos(th2)*np.sin(th3)*np.sin(th5)*np.sin(th6) + l7*np.cos(th5)*np.sin(th2)*np.sin(th4)*np.sin(th6) + l7*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.cos(th5)*np.sin(th6)), l4*(np.cos(th1)*np.sin(th3) - np.cos(th3)*np.sin(th1)*np.sin(th2)) - l6*(np.cos(th5)*(np.cos(th1)*np.sin(th3) - np.cos(th3)*np.sin(th1)*np.sin(th2)) + np.cos(th4)*np.sin(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) - l7*(np.sin(th6)*(np.sin(th5)*(np.cos(th1)*np.sin(th3) - np.cos(th3)*np.sin(th1)*np.sin(th2)) - np.cos(th4)*np.cos(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) + np.cos(th6)*np.sin(th4)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) - l5*np.sin(th4)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3)), - l5*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) - l7*(np.cos(th6)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) - np.cos(th5)*np.sin(th6)*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4))) - l6*np.sin(th5)*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4)), - l6*(np.cos(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) + np.sin(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) - l7*np.sin(th6)*(np.sin(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) - np.cos(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))), -l7*(np.sin(th6)*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4)) - np.cos(th6)*(np.cos(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) + np.sin(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3)))), 0],
      [0, l4*np.sin(th2)*np.sin(th3) - l5*np.cos(th2)*np.cos(th4) - l3*np.cos(th2) - l7*np.cos(th2)*np.cos(th4)*np.cos(th6) - l5*np.cos(th3)*np.sin(th2)*np.sin(th4) - l6*np.cos(th5)*np.sin(th2)*np.sin(th3) + l6*np.cos(th2)*np.sin(th4)*np.sin(th5) - l6*np.cos(th3)*np.cos(th4)*np.sin(th2)*np.sin(th5) - l7*np.cos(th3)*np.cos(th6)*np.sin(th2)*np.sin(th4) - l7*np.cos(th2)*np.cos(th5)*np.sin(th4)*np.sin(th6) - l7*np.sin(th2)*np.sin(th3)*np.sin(th5)*np.sin(th6) + l7*np.cos(th3)*np.cos(th4)*np.cos(th5)*np.sin(th2)*np.sin(th6), -np.cos(th2)*(l4*np.cos(th3) - l6*np.cos(th3)*np.cos(th5) + l5*np.sin(th3)*np.sin(th4) + l6*np.cos(th4)*np.sin(th3)*np.sin(th5) + l7*np.cos(th6)*np.sin(th3)*np.sin(th4) - l7*np.cos(th3)*np.sin(th5)*np.sin(th6) - l7*np.cos(th4)*np.cos(th5)*np.sin(th3)*np.sin(th6)),                                                                                                                                                      l5*np.sin(th2)*np.sin(th4) + l5*np.cos(th2)*np.cos(th3)*np.cos(th4) + l6*np.cos(th4)*np.sin(th2)*np.sin(th5) + l7*np.cos(th6)*np.sin(th2)*np.sin(th4) + l7*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.cos(th6) - l6*np.cos(th2)*np.cos(th3)*np.sin(th4)*np.sin(th5) - l7*np.cos(th4)*np.cos(th5)*np.sin(th2)*np.sin(th6) + l7*np.cos(th2)*np.cos(th3)*np.cos(th5)*np.sin(th4)*np.sin(th6), l6*np.cos(th5)*np.sin(th2)*np.sin(th4) - l6*np.cos(th2)*np.sin(th3)*np.sin(th5) + l6*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.cos(th5) + l7*np.cos(th2)*np.cos(th5)*np.sin(th3)*np.sin(th6) + l7*np.sin(th2)*np.sin(th4)*np.sin(th5)*np.sin(th6) + l7*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.sin(th5)*np.sin(th6), l7*np.cos(th4)*np.sin(th2)*np.sin(th6) - l7*np.cos(th2)*np.cos(th3)*np.sin(th4)*np.sin(th6) + l7*np.cos(th2)*np.cos(th6)*np.sin(th3)*np.sin(th5) - l7*np.cos(th5)*np.cos(th6)*np.sin(th2)*np.sin(th4) - l7*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.cos(th5)*np.cos(th6), 0]]
     return jacob
 
-def IK(goal, q):
+# given pillar base coord, center and radius to make sphere, check if sphere collides with cylinder (pillar)
+def pillarCollision(pillar, center, radius):
+    pRad = 6 # pillar radius
+    # translate everything so that sphere is centered at origin
+    newPillar = np.array(pillar) # need to avoid aliasing
+    newPillar[2] = getHeight(pillar[2]) # convert to mm
+    temp = newPillar - center
+    # find out how close axis of pillar is to 'origin''
+    dist = np.sqrt(temp[0]**2 + temp[1]**2 + temp[2]**2)
+    if dist > radius + pRad: # check that combined radii are less than dist between axes
+        return False # no collision
+    if printMe:
+        print(newPillar, center)
+    return True
 
-    moviewriter = ani.PillowWriter()
-    fig = plt.figure(1)
-    p, joints, endEffector = FK(q)
 
-    qOld = [0,0,0,0,0,0,0] # default configuration
+# given plane (normal to z, so just z), x and y limits, center and radius of sphere, find if they intersect
+def planeCollision(z, xlim, ylim, center, radius):
+    # find distance from sphere center to plane height
+    dist = center[2] - z # only need to worry about z coordinates because plane's normal is [0 0 1]
+    # check that distance is less than radius of sphere. If it is more, no collision
+    if dist > radius:
+        return False
+    # now find point on plane that is closest
+    # p = [center[0], center[1], z] # logically it would be this
+    # check if it is within limits
+    pmin = [center[0] - radius, center[1] - radius]
+    pmax = [center[0] + radius, center[1] + radius]
+
+    if pmin[0] > xlim[0] and pmax[0] < xlim[1] or pmin[1] > ylim[0] and pmax[1] < ylim[1]:
+        return True
+    return False
+
+# given an array of origins, find min and max x values, add 5 cm to all (50 mm)
+def getLimits(centers):
+    xmin = centers[0][0]
+    xmax = centers[0][0]
+    ymin = centers[0][1]
+    ymax = centers[0][1]
+
+    for i in centers:
+        if i[0] > xmax:
+            xmax = i[0]
+        elif i[0] < xmin: # should only ever be one or the other
+            xmin = i[0]
+
+        if i[1] > ymax:
+            ymax = i[1]
+        elif i[1] < ymin:
+            ymin = i[1]
+
+    return (xmin, xmax), (ymin, ymax)
+
+# checks whether the wrist or pillar in hand has collided with standing pillars or tiles
+# spots is only occupied spots
+# spots have diameter = 20 mm, rad = 10 mm
+# pillars have diameter = 12 mm, rad = 6 mm
+# pillars have height of 45 mm
+def checkCollision(p, spots, origins):
+    # check if p is clear within set rad
+    wristRad = 50 # in mm, so 5 cm
+    # wrist represented by sphere around p with rad 100
+    # each pillar/spot is a coordinate in 3D (height based on level). It extends a certain height up and has rad 10
+    for k in spots: # 3 levels
+        for i in k:
+            if pillarCollision(i, p, wristRad): # if true, collision occured
+                print("Pillar collided!")
+                return True, i
+
+    level = 0
+    for i in origins:
+        # must find limits of x and y based on plane
+        xlim, ylim = getLimits(i)
+        height = getHeight(level)
+        if planeCollision(height, xlim, ylim, p, wristRad):
+            print("Plane collided!")
+            return True, i
+        level += 1
+
+    return False, None  # if made to this point, no collision
+
+
+# pick a spot on the top level that is empty
+def getGoal(spots, filled):
+    height = 45 # pillar height
+    tileHeight = 2 # tile height
+    levels = len(spots)-1
+    empty = []
     count = 0
-    alpha = 0.2
-    with moviewriter.saving(fig, 'IKsimulation.gif', dpi=100):
-        while np.linalg.norm(np.subtract(qOld, q)) > 0.01 and count < 70:
+    # get all empty spots on top floor
+    for i in spots[levels]:
+        if filled[levels][count] == 0:
+            # give the goal 0.5 pillar's with higher to help avoid collisions
+            temp = np.append(i, (levels+1)*height + tileHeight*(levels+1)) # gotta add z component
+            empty.append(temp)
+
+    # randomly choose one
+    if empty == []:
+        if printMe:
+            print("Oops, no spots available")
+        goal = [-1]
+        return goal
+
+    goal = random.choice(empty)
+    return goal
+
+# levels starts at 0
+def getHeight(levels):
+    height = 45  # pillars in mm
+    tileHeight = 2 # thickness of cardboard
+    return (levels * height + tileHeight * (levels + 1))
+
+def get3D(occupied):
+    count = 0
+    occ3D = []
+    for i in occupied: # should be 3 items
+        height = getHeight(count)
+        count += 1
+        temp = []
+        for j in i:
+            temp.append(np.append(j,height))
+        occ3D.append(temp)
+    return occ3D
+
+# takes in goal coord, current configuration, all spots, filled binary array, and origins of floors
+def IK(goal, q, spots, filled, origins):
+    # plotMe = True
+    occupiedTemp = tower.getOccupied(spots, filled)
+    # must convert occupied into 3D data
+    occupied = get3D(occupiedTemp)
+    if plotMe:
+        moviewriter = ani.PillowWriter()
+        fig = plt.figure(1)
+    p, joints, endEffector = FK(q) # p is current end joint, joints are angles the joints are at, end effector is for plotting only
+
+    qOld = [0,0,0,0,0,0,0] # default configuration # MAY NEED TO CHANGE THIS
+    count = 0
+    threshold = 100
+    alpha = 0.6
+    if plotMe:
+        with moviewriter.saving(fig, 'IKsimulation.gif', dpi=100):
+            while np.linalg.norm(np.subtract(qOld, q)) > 0.005 and count < threshold:
+                # print(np.linalg.norm(np.subtract(qOld, q)))
+                count = count + 1
+
+                diff = np.subtract(goal, p)
+                jacob = Jacobian(q)
+                dq = np.matmul(np.linalg.pinv(jacob), diff)
+                qOld = q
+                q = q + alpha * dq
+                p, joints, endEffector = FK(q)
+
+                plt.clf()
+                ax = plt.axes(projection='3d')
+
+                collide, pt = checkCollision(p, occupied, origins)
+                # if collides, return that it collided
+                if collide and printMe:
+                    print("Collide!")
+                    count = threshold # finish loop but then return
+                    ax.plot3D(pt[0], pt[1], pt[2], '*m')
+                ax.plot3D(p[0], p[1], p[2], '*c')
+
+                # plot(joints, endEffector, goal)
+
+                ax.plot3D(joints[:, 0], joints[:, 1], joints[:, 2], '.-r')
+                ax.plot3D(endEffector[:, 0], endEffector[:, 1], endEffector[:, 2], '.-b')
+                ax.plot3D(goal[0], goal[1], goal[2], '*g')
+
+                moviewriter.grab_frame()
+        moviewriter.finish()
+
+    else:
+        while np.linalg.norm(np.subtract(qOld, q)) > 0.005 and count < threshold:
             # print(np.linalg.norm(np.subtract(qOld, q)))
             count = count + 1
 
@@ -127,26 +294,63 @@ def IK(goal, q):
             qOld = q
             q = q + alpha * dq
             p, joints, endEffector = FK(q)
-            # plot(joints, endEffector, goal)
-            plt.clf()
-            ax = plt.axes(projection='3d')
-            ax.plot3D(joints[:, 0], joints[:, 1], joints[:, 2], '.-r')
-            ax.plot3D(endEffector[:, 0], endEffector[:, 1], endEffector[:, 2], '.-b')
-            ax.plot3D(goal[0], goal[1], goal[2], '*g')
 
-            moviewriter.grab_frame()
+            # check for collision
+            collide, pt = checkCollision(p, occupied, origins)
+            # if collides, return that it collided
+            if collide:
+                return -1, q, p  # collision, failed
+
+    # if get here, success!
+    # return success
+    if printMe:
+        print(count)
+    if count < threshold and printMe:
+        print("Success!")
+        print(p)
+    return 1, q, p
+
+    #print(count)
+    # return q
 
 
-    moviewriter.finish()
-    print(count)
-    return q
-
-
-
+printMe = False
+plotMe = False
 
 if __name__ == "__main__":
-    goal = [100,100,1000]
-    q = [1,1,1,1,1,1,1] # start configuration
-    IK(goal, q)
+    # plotMe = True
+    count = 0
+    if plotMe:
+        spots, filled, origins = tower.build()  # all spots, binary array of occupied or not, origins
+        # based on spots, pick one of the unfilled ones from the top floor as a goal
+        goal = [-1]
+        while goal[0] == -1 and count < 100:
+            goal = getGoal(spots, filled)
+            count += 1
+        if count == 100:
+            print("oops")
+            sys.exit()
+        # goal = [-230,-504,120]
+        #goal = [-1, 1, -1]
+        print("Goal " + str(goal))
+        # q = [1, 1, 1, 1, 1, 1, 1]  # start configuration
+        q = [1, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+        print(IK(goal, q, spots, filled, origins))
 
+    else:
+        while count < 10:
+            # read in data
+            spots, filled, origins = tower.build() # all spots, binary array of occupied or not, origins
+            if spots == -1: # mistake in building, retry
+                continue
+            # based on spots, pick one of the unfilled ones from the top floor as a goal
+            goal = getGoal(spots, filled)
+            if goal[0] == -1: # no spot available
+                continue
+
+            q = [1, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6] # start configuration
+            print("Goal " + str(goal))
+            IK(goal, q, spots, filled, origins)
+
+            count += 1
 

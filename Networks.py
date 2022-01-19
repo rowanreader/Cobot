@@ -52,7 +52,7 @@ class Actor(keras.Model):
         # self.flatten = Flatten()
         self.layer1 = Dense(self.dim1, activation='relu')
         self.layer2 = Dense(self.dim2, activation='relu')
-        self.out = Dense(self.numActions, activation='tanh')
+        self.out = Dense(self.numActions) # default activation is linear/identity
 
     def call(self, state): # should this be __call__?
         # state = self.flatten(state)
