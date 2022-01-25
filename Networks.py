@@ -3,6 +3,7 @@
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.layers import Dense, Flatten
+import numpy as np
 
 
 # critic network, child class of the keras Model class
@@ -59,6 +60,9 @@ class Actor(keras.Model):
         action = self.layer1(state)
         action = self.layer2(action)
         action = self.out(action)
+        temp = tf.clip_by_value(action, [0, 0, 0], [1000, 1000, 1000])
+        if np.isnan(temp[0][0]):
+            print("Oops")
         return action
 
 

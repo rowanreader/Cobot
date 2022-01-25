@@ -1,6 +1,8 @@
 import random
 import numpy as np
 import sys
+import pickle
+import SawyerSim
 
 printstuff = False
 rad = 10
@@ -550,4 +552,33 @@ def build():
 # except Exception as e:
 #     print(e)
 
-build()
+if __name__ == "__main__":
+    numTowers = 1
+    fileName = "TowerModels.txt"
+    file = open(fileName, 'wb')
+    for _ in range(numTowers):
+        goal = [-1]
+        spots = -1
+        while goal[0] == -1 or spots == -1:
+            spots, filled, origins = build()
+            if spots == -1:
+                continue # won't be able to get goal
+            goal = SawyerSim.getGoal(spots, filled)
+        pickle.dump([spots, filled, origins], file)
+        # print(spots)
+        # print(filled)
+        # print(origins)
+    file.close()
+
+    # print()
+
+    # with open(fileName, 'rb') as f:
+    #     # temp = pickle.load(f)
+    #     for i in range(numTowers):
+    #         temp = pickle.load(f)
+    #         spots = temp[0]
+    #         filled = temp[1]
+    #         origins = temp[2]
+    #         print(spots)
+    #         print(filled)
+    #         print(origins)

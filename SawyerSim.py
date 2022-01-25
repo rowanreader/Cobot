@@ -139,8 +139,9 @@ def planeCollision(z, xlim, ylim, center, radius):
     # check if it is within limits
     pmin = [center[0] - radius, center[1] - radius]
     pmax = [center[0] + radius, center[1] + radius]
-
-    if pmin[0] > xlim[0] and pmax[0] < xlim[1] or pmin[1] > ylim[0] and pmax[1] < ylim[1]:
+    # check within z lim
+    zlim = [z-radius, z+radius]
+    if pmin[0] >= xlim[0] and pmax[0] <= xlim[1] and pmin[1] >= ylim[0] and pmax[1] <= ylim[1] and zlim[0] <= center[2] <= zlim[1]:
         return True
     return False
 
@@ -150,17 +151,17 @@ def getLimits(centers):
     xmax = centers[0][0]
     ymin = centers[0][1]
     ymax = centers[0][1]
-
+    offset = 50
     for i in centers:
         if i[0] > xmax:
-            xmax = i[0]
+            xmax = i[0] + offset
         elif i[0] < xmin: # should only ever be one or the other
-            xmin = i[0]
+            xmin = i[0] - offset
 
         if i[1] > ymax:
-            ymax = i[1]
+            ymax = i[1] + offset
         elif i[1] < ymin:
-            ymin = i[1]
+            ymin = i[1] - offset
 
     return (xmin, xmax), (ymin, ymax)
 
@@ -353,4 +354,13 @@ if __name__ == "__main__":
             IK(goal, q, spots, filled, origins)
 
             count += 1
+
+    # i is array of origins
+    # i = [[504, 175, 300], [550, 200, 300], [480, 160, 300]]
+    # p = [500, 200, 300]
+    # wristRad = 50
+    # xlim, ylim = getLimits(i)
+    # height = i[0][2]
+    # if planeCollision(height, xlim, ylim, p, wristRad):
+    #     print("Plane collided!")
 

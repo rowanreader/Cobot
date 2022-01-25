@@ -9,8 +9,8 @@ import numpy as np
 
 # this is the parent class of Actor and Critic classes
 class Agent:
-    def __init__(self, inputShape, env, maxSize=1000000, dim1=512, dim2=512, numActions=3, batchSize=64, alpha=0.0003,
-                 beta=0.002, tau=0.005, gamma=0.99, noise=0.1):
+    def __init__(self, inputShape, env, maxSize=1000000, dim1=512, dim2=512, numActions=3, batchSize=64, alpha=0.3,
+                 beta=0.02, tau=0.005, gamma=0.99, noise=0.1):
 
         self.numActions = numActions
         self.memory = ReplayBuffer(maxSize, inputShape, numActions)
@@ -84,8 +84,10 @@ class Agent:
         if train:
             actions += tf.random.normal(shape=[self.numActions], mean=0, stddev=self.noise)
 
-        actions = tf.clip_by_value(actions, self.minAction, self.maxAction)
-        return actions[0]
+        actions = tf.clip_by_value(actions, [self.minAction,self.minAction,self.minAction], [self.maxAction,self.maxAction,self.maxAction])
+        if np.isnan(actions[0][0]):
+            print("Oops")
+        return actions[0].numpy()
 
     def learn(self):
 
