@@ -253,7 +253,7 @@ def IK(goal, q, spots, filled, origins):
     alpha = 0.6
     if plotMe:
         with moviewriter.saving(fig, 'IKsimulation.gif', dpi=100):
-            while np.linalg.norm(np.subtract(qOld, q)) > 0.005 and count < threshold:
+            while np.linalg.norm(np.subtract(qOld, q)) > 0.0005 and count < threshold:
                 # print(np.linalg.norm(np.subtract(qOld, q)))
                 count = count + 1
 
@@ -285,7 +285,7 @@ def IK(goal, q, spots, filled, origins):
         moviewriter.finish()
 
     else:
-        while np.linalg.norm(np.subtract(qOld, q)) > 0.005 and count < threshold:
+        while np.linalg.norm(np.subtract(qOld, q)) > 0.0005 and count < threshold:
             # print(np.linalg.norm(np.subtract(qOld, q)))
             count = count + 1
 

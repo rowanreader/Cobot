@@ -38,8 +38,8 @@ class Environment(gym.Env):
         low = np.array([-limit, -limit, -limit])  # x, y, z
         high = np.array([limit, limit, limit])
         # shape = np.int
-
-        self.observation_space = spaces.Box(-limit, limit, shape=(165,), dtype=np.int) # this is filled spots, origins, and goal
+        self.obsLen = 6  # how big the state is
+        self.observation_space = spaces.Box(-limit, limit, shape=(self.obsLen,), dtype=np.int) # this is filled spots, origins, and goal
         self.action_space = spaces.Box(low, high, shape=(3,), dtype=np.int)
         self.reward_range = (-3000, 3000) #reward_range
         self.arm = arm  # state of arm
@@ -49,17 +49,24 @@ class Environment(gym.Env):
         self.spots = spots
         self.stepCount = 0
         self.endFlag = 0
-        self.goal = SawyerSim.getGoal(self.spots, self.filled)
+        # self.goal = SawyerSim.getGoal(self.spots, self.filled)
+        self.goal = np.array([682.75, 402.6875, 141])
         self.outcome = 0 # fail (-1), success (1), error (0)
         self.endPoint, _, _ = SawyerSim.FK(self.arm) # where the end point/hand of the robot is
 
-        self.state = self.convert(self.occupied, self.origins, self.goal)
+        self.state = self.minConvert(self.occupied, self.origins, self.goal)
+
+
 
     # levels is 0, 1, or 2
     def getHeight(self, levels):
         height = 45  # pillars in mm
         tileHeight = 2 # thickness of cardboard
         return (levels * height + tileHeight * (levels + 1))
+
+
+    def minConvert(self,occupied, origins, goal):
+        return [goal, self.endPoint]
 
     # takes in occupied coordinates, origin coordinates, and goal coordinate
     # puts in flattened rectangular array
@@ -109,6 +116,7 @@ class Environment(gym.Env):
 
     # reward must increase the closer it gets to goal too
     def getReward(self, action):
+        thresh = 10 # if within 10 mm close enough
         outcome = self.outcome
         # default -1 for step
         if outcome == -1: # fail
@@ -116,22 +124,25 @@ class Environment(gym.Env):
             print("Failed!")
             alpha = -0.3
             dist = self.getDist(action)
-            print(dist)
+            print("Reward Dist: " + str(dist))
             # print(dist)
             return alpha * dist
         # return -2500 # large negative reward, to make it unattractive to insta-fail
-        elif outcome == 0: # error
-            return 0 # must retry, no penalty
-        elif outcome == 1: # success
+        elif outcome == 0:  # error
+            return 0  # must retry, no penalty
+        elif outcome == 1:  # success
             # reward based on how close to goal distance is
             alpha = -0.003
+            dist = self.getDist(action) # check if absolute distance is close enough
+            if dist < thresh:
+                self.endFlag = 1
             if self.endFlag == 0:
                 # dist = self.getDist(action)
                 # print(dist)
-                dist = self.getRelativeDist(action)
-                return alpha*dist # step reward (small negative)
+                rdist = self.getRelativeDist(action)
+                return alpha*rdist  # step reward (small negative)
             print("Succeeded!)")
-            return 1000 # large positive reward
+            return 100  # large positive reward
         print("Shouldn't get here, reward error")
         return 0  # shouldn't get here
 
@@ -139,13 +150,11 @@ class Environment(gym.Env):
         dist = np.linalg.norm(self.goal - pt)
         return dist
 
-
     # finds distance between current location and previous location
     # returns difference such that if it is closer now the return value is negative
     def getRelativeDist(self, pt):
         prevDist = self.getDist(self.endPoint)
         dist = self.getDist(pt)
-
         return dist - prevDist
 
 
@@ -166,8 +175,11 @@ class Environment(gym.Env):
         info = 0 # placeholder, add debugging info in needed
 
         reward = self.getReward(temp)
+
         self.endPoint = temp
-        self.state = self.convert(self.occupied, self.origins, self.goal)
+        self.state = self.minConvert(self.occupied, self.origins, self.goal)
+
+
         # could probably just return self??? but system wants it like this
         # total observation includes both octomap and joint configurations - will need to join better probably
         return self.state, reward, self.endFlag, info
@@ -210,7 +222,7 @@ class Environment(gym.Env):
         self.goal = np.array([682.75, 402.6875, 141])
 
 
-        self.state = self.convert(self.occupied, self.origins, self.goal) # must be a combo of origins, pillars, and goal
+        self.state = self.minConvert(self.occupied, self.origins, self.goal) # must be a combo of origins, pillars, and goal
 
         return f, self.state
 
@@ -228,11 +240,11 @@ class Environment(gym.Env):
     # draw line in occupied
     # draw arm and endpoint with bubble around it
     # save to file
-    def render(self, num, dist):
+    def render(self, num, val):
         file = "plots/attempt: " + str(num) + ".jpg"
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        state = self.state
+        state = self.convert(self.occupied, self.origins, self.goal) # have to reconvert due to minConvert
         occupied = state[0:45]
         spots = self.flatten(self.spots)
         goal = self.goal
@@ -246,7 +258,7 @@ class Environment(gym.Env):
         ax.plot3D(joints[:, 0], joints[:, 1], joints[:, 2], '.-r')
         ax.plot3D(endEffector[:, 0], endEffector[:, 1], endEffector[:, 2], '.-b')
         ax.plot3D(p[0], p[1], p[2], '*c')
-        plt.title("dist: " + str(dist))
+        plt.title("Reward: " + str(val))
         fig.savefig(file)
         plt.close(fig)
 

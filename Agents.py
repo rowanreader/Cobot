@@ -9,8 +9,8 @@ import numpy as np
 
 # this is the parent class of Actor and Critic classes
 class Agent:
-    def __init__(self, inputShape, env, maxSize=1000000, dim1=512, dim2=512, numActions=3, batchSize=64, alpha=0.3,
-                 beta=0.02, tau=0.005, gamma=0.99, noise=0.1):
+    def __init__(self, inputShape, env, maxSize=1000000, dim1=512, dim2=512, numActions=3, batchSize=64, alpha=0.03,
+                 beta=0.02, tau=0.005, gamma=0.99, noise=10):
 
         self.numActions = numActions
         self.memory = ReplayBuffer(maxSize, inputShape, numActions)
@@ -52,11 +52,11 @@ class Agent:
         self.targetCritic.set_weights(weights)
 
     # to store the specific state transition
-    def record(self, state, action, reward, state_, endFlag):
+    def record(self, state, action, reward, state_, endFlag, obsLen):
 
-        state = np.reshape(state, [165], order='C')
+        state = np.reshape(state, [obsLen], order='C')
 
-        state_ = np.reshape(state_, [165], order='C')
+        state_ = np.reshape(state_, [obsLen], order='C')
         self.memory.store(state, action, reward, state_, endFlag)
 
     def saveModels(self):
@@ -75,16 +75,18 @@ class Agent:
 
     # based on current state, choose action
     # if train is true, add noise to simulate reality, if false, don't
-    def chooseAction(self, observation, train=True):
-        observation = np.reshape(observation, [165], order='C')
+    def chooseAction(self, observation, obsLen, evaluate=True):
+        observation = np.reshape(observation, [obsLen], order='C')
         state = tf.convert_to_tensor([observation], dtype=tf.float32) # the form needed for submitting to net
 
         # get actions = degrees to rotate for all joints
         actions = self.actor(state) # automatically calls 'call' function
-        if train:
+        if not evaluate:
             actions += tf.random.normal(shape=[self.numActions], mean=0, stddev=self.noise)
 
         actions = tf.clip_by_value(actions, [self.minAction,self.minAction,self.minAction], [self.maxAction,self.maxAction,self.maxAction])
+
+
         if np.isnan(actions[0][0]):
             print("Oops")
         return actions[0].numpy()

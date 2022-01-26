@@ -11,7 +11,7 @@ import pickle
 printMe = False
 readIn = True
 if __name__ == '__main__':
-    numGames = 50
+    numGames = 100
     # transform = [400, 400, 100] # translate all points in the tower by this much
 
     fileName = "TowerModels.txt"
@@ -50,7 +50,7 @@ if __name__ == '__main__':
             state_, reward, endFlag, info = env.step(action) # carry out action
             if printMe:
                 print(action)
-            agent.record(state, action, reward, state_, endFlag)
+            agent.record(state, action, reward, state_, endFlag, env.obsLen)
             numSteps += 1
         # now have enough in memory bank to sample/learn, modifies nets
         agent.learn()
@@ -67,12 +67,13 @@ if __name__ == '__main__':
         count = 0
         # go until end of episode (either failure or success)
         while not endFlag and count < thresh:
-            action = agent.chooseAction(state, evaluate)
+            action = agent.chooseAction(state, env.obsLen, evaluate)
+            # print("1 action: " + str(action))
             if printMe:
                 print(action)
             state_, reward, endFlag, info = env.step(action) # observe effects of actions
             score += reward # track total score
-            agent.record(state, action, reward, state_, endFlag)
+            agent.record(state, action, reward, state_, endFlag, env.obsLen)
             if not loadCheckpoint:
                 agent.learn()
             state = state_
@@ -91,12 +92,15 @@ if __name__ == '__main__':
             if not loadCheckpoint:
                 agent.saveModels()
         dist = env.getDist(action)
-        print("Goal: " + str(goal))
+        # print("Goal: " + str(goal))
         print("Final Action: " + str(action))
         # if np.isnan(score):
         #     print("Oops")
-        env.render(i, dist)
+        env.render(i, score)
+        print(env.state)
         print('episode ', i, 'score %.1f' % score, 'avg score %.1f' % aveScore) # always print
+        print(" ")
+
     if printMe:
         print(env.goal, i)
     if not loadCheckpoint:

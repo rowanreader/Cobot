@@ -220,7 +220,7 @@ def build():
 
 
     # randomly choose level (1, 2, 3)
-    levels = random.sample(range(1,4), 1)[0] # either 1 2 or 3
+    levels = random.sample(range(1, 4), 1)[0]  # either 1 2 or 3
     levels = 3
     if printstuff == True:
         print("Going up to level " + str(levels))

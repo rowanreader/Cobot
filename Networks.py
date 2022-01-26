@@ -50,19 +50,21 @@ class Actor(keras.Model):
         self.modelName = name
         self.saveFile = self.modelName + ".h5"
 
+        initializer = tf.random_uniform_initializer()
         # self.flatten = Flatten()
         self.layer1 = Dense(self.dim1, activation='relu')
         self.layer2 = Dense(self.dim2, activation='relu')
-        self.out = Dense(self.numActions) # default activation is linear/identity
+        self.out = Dense(self.numActions, activation='tanh', kernel_initializer=initializer) # default activation is linear/identity
 
     def call(self, state): # should this be __call__?
         # state = self.flatten(state)
         action = self.layer1(state)
         action = self.layer2(action)
         action = self.out(action)
-        temp = tf.clip_by_value(action, [0, 0, 0], [1000, 1000, 1000])
-        if np.isnan(temp[0][0]):
-            print("Oops")
+        action = action*500 + 500
+        # temp = tf.clip_by_value(action, [0, 0, 0], [1000, 1000, 1000])
+        # if np.isnan(temp[0][0]):
+        #     print("Oops")
         return action
 
 
