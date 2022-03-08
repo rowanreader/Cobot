@@ -17,7 +17,6 @@ class Critic(keras.Model):
         self.dim2 = dim2
         self.modelName = name  # probably not needed
         self.saveFile = self.modelName + ".h5"
-        self.lossRec = []
 
         self.layer1 = Dense(self.dim1, activation='relu')
         self.layer2 = Dense(self.dim2, activation='relu')
@@ -43,14 +42,13 @@ class Critic(keras.Model):
 class Actor(keras.Model):
 
     # takes in dimensions for 2 layers and number of actions (x,y,x -> needed for output layer)
-    def __init__(self, name='actor', dim1=512, dim2=512, numActions=3):
+    def __init__(self, name='actor', dim1=512, dim2=512, numActions=1):
         super(Actor, self).__init__()
         self.dim1 = dim1
         self.dim2 = dim2
         self.numActions = numActions
         self.modelName = name
         self.saveFile = self.modelName + ".h5"
-        self.lossRec = []
 
         initializer = tf.random_uniform_initializer()
         # self.flatten = Flatten()
@@ -64,7 +62,7 @@ class Actor(keras.Model):
         action = self.layer1(state)
         action = self.layer2(action)
         action = self.out(action)
-        action = action*500 + 500
+        # action = action*500 + 500
         # temp = tf.clip_by_value(action, [0, 0, 0], [1000, 1000, 1000])
         # if np.isnan(temp[0][0]):
         #     print("Oops")

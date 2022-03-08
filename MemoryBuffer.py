@@ -3,7 +3,7 @@
 import numpy as np
 
 class ReplayBuffer:
-    def __init__(self, maxSize, inputShape, numActions=3):
+    def __init__(self, maxSize, inputShape, numActions=1):
         self.memSize = maxSize
         self.counter = 0 # initialize couter to track index
 

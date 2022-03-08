@@ -45,6 +45,7 @@ def getDist(p1, p2):
     return dist
 
 # given a point an a list of clusters, finds nearst
+
 def closestCluster(point, clusters):
     min = sys.maxsize
     count = 0
@@ -58,6 +59,7 @@ def closestCluster(point, clusters):
 
 
 # takes in list of coordinates, binary list representing which are filled, and the number of clusters to find, finds most balanced set
+
 def getClusters(spots, filled, numClusters):
     alpha = 0.5
 
@@ -113,9 +115,6 @@ def getClusters(spots, filled, numClusters):
     if printstuff == True:
         print("Cluster error: " + str(error))
     return origin
-
-
-
 
     # check error size, once less than threshold (or number of iterations is too large), stop
 
@@ -176,6 +175,7 @@ tile18 = Tile([(-26, 32), (0, 9), (26, 32)]) # (R, K, Y)
 tiles = [tile01, tile02, tile03, tile04, tile05, tile06, tile07, tile08, tile09, tile10, tile11, tile12, tile13, tile14, tile15, tile16, tile17, tile18]
 # takes in array of coordinates and binary array indicating whether they are occupied (1) or not (0)
 # returns all spots that are occupied
+
 def getOccupied(spots, filled):
     occupied = []
     count1 = 0
@@ -201,6 +201,7 @@ def getOccupied(spots, filled):
 # builds random tower
 # returns occupied spots and origin of tiles
 # can make plane based on that
+
 def build():
     allWorldSpots = []
     allFilled = []
@@ -221,7 +222,7 @@ def build():
 
     # randomly choose level (1, 2, 3)
     levels = random.sample(range(1, 4), 1)[0]  # either 1 2 or 3
-    levels = 3
+    # levels = 1
     if printstuff == True:
         print("Going up to level " + str(levels))
     filledSpots = []
@@ -553,8 +554,8 @@ def build():
 #     print(e)
 
 if __name__ == "__main__":
-    numTowers = 1
-    fileName = "TowerModels.txt"
+    numTowers = 1000
+    fileName = "TowerModels" + str(numTowers) + ".txt"
     file = open(fileName, 'wb')
     for _ in range(numTowers):
         goal = [-1]
@@ -564,7 +565,7 @@ if __name__ == "__main__":
             if spots == -1:
                 continue # won't be able to get goal
             goal = SawyerSim.getGoal(spots, filled)
-        pickle.dump([spots, filled, origins], file)
+        pickle.dump([spots, filled, origins, goal], file)
         # print(spots)
         # print(filled)
         # print(origins)

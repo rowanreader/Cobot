@@ -4,13 +4,14 @@ import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.optimizers import Adam
 from MemoryBuffer import ReplayBuffer
-from Networks import Actor, Critic
+from PendNetworks import Actor, Critic
 import numpy as np
 
 # this is the parent class of Actor and Critic classes
 class Agent:
-    def __init__(self, inputShape, env, maxSize=1000000, dim1=64, dim2=64, numActions=3, batchSize=64, alpha=0.00001,
-                 beta=0.0001, tau=0.005, gamma=0.95, noise=150):
+    # beta should be larger than alpha
+    def __init__(self, inputShape, env, maxSize=1000000, dim1=512, dim2=512, numActions=1, batchSize=64, alpha=0.001,
+                 beta=0.002, tau=0.005, gamma=0.99, noise=.1):
 
         self.numActions = numActions
         self.memory = ReplayBuffer(maxSize, inputShape, numActions)
@@ -29,16 +30,12 @@ class Agent:
 
         # configure the model with losses and metrics
         self.actor.compile(optimizer=Adam(learning_rate=alpha))
-
         self.critic.compile(optimizer=Adam(learning_rate=beta))
-
         self.targetActor.compile(optimizer=Adam(learning_rate=alpha))
-
         self.targetCritic.compile(optimizer=Adam(learning_rate=beta))
 
 
-
-        self.updateNets(self.tau) # ???
+        self.updateNets(self.tau)
 
     def updateNets(self, tau):
 
@@ -56,11 +53,11 @@ class Agent:
         self.targetCritic.set_weights(weights)
 
     # to store the specific state transition
-    def record(self, state, action, reward, state_, endFlag, obsLen):
+    def record(self, state, action, reward, state_, endFlag):
 
-        state = np.reshape(state, [obsLen], order='C')
-
-        state_ = np.reshape(state_, [obsLen], order='C')
+        # state = np.reshape(state, order='C')
+        #
+        # state_ = np.reshape(state_, order='C')
         self.memory.store(state, action, reward, state_, endFlag)
 
     def saveModels(self):
@@ -79,8 +76,8 @@ class Agent:
 
     # based on current state, choose action
     # if train is true, add noise to simulate reality, if false, don't
-    def chooseAction(self, observation, obsLen, evaluate=True):
-        observation = np.reshape(observation, [obsLen], order='C')
+    def chooseAction(self, observation, evaluate=True):
+        # observation = np.reshape(observation, [obsLen], order='C')
         state = tf.convert_to_tensor([observation], dtype=tf.float32) # the form needed for submitting to net
 
         # get actions = degrees to rotate for all joints
@@ -88,7 +85,7 @@ class Agent:
         if not evaluate:
             actions += tf.random.normal(shape=[self.numActions], mean=0, stddev=self.noise)
 
-        actions = tf.clip_by_value(actions, [self.minAction,self.minAction,self.minAction], [self.maxAction,self.maxAction,self.maxAction])
+        actions = tf.clip_by_value(actions, self.minAction, self.maxAction)
 
 
         if np.isnan(actions[0][0]):
@@ -115,7 +112,7 @@ class Agent:
             criticVal = tf.squeeze(self.critic(states, actions), 1)
 
             # update target value as reward with some influence from critic
-            target = rewards + self.gamma*criticVal_*(1-flag) # only update if not a terminal episode
+            target = reward + self.gamma*criticVal_*(1-flag) # only update if not a terminal episode
 
             criticLoss = keras.losses.MSE(target, criticVal) # get loss based on target value and what was predicted
 
@@ -127,7 +124,7 @@ class Agent:
             actorActions = self.actor(states) # get actions
             actorLoss = -self.critic(states, actorActions) # get critic's q values based on states and new actions
             actorLoss = tf.math.reduce_mean(actorLoss) # calculate mean?
-        self.actor.lossRec.append(float(actorLoss))
+
         actNetGradient = tape.gradient(actorLoss, self.actor.trainable_variables)
         self.actor.optimizer.apply_gradients(zip(actNetGradient, self.actor.trainable_variables))
 
