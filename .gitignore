@@ -2,3 +2,9 @@
 *.xml
 *.pyc
 *.png
+
+*.zip
+*.d
+*.iml
+*.jpg
+*.deb

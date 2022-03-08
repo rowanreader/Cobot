@@ -1,0 +1,63 @@
+Took too long
+Distance: 805.1199511466468
+... saving models ...
+Final Action: [-0.27094156  0.537814   -0.33704114]
+[array([682.75  , 402.6875, 141.    ]), array([-1.68544612,  1.18082237, -0.4294869 ])]
+episode  0 score -403.1 avg score -403.1
+ 
+Took too long
+Distance: 800.307842645995
+... saving models ...
+Final Action: [ -0.37236738  16.357624   -15.798282  ]
+[array([682.75  , 402.6875, 141.    ]), array([  0.81398819,  14.95016357, -15.85814298])]
+episode  1 score -400.7 avg score -401.9
+ 
+Took too long
+Distance: 811.9074803697846
+Final Action: [-11.288116    2.5686095   9.0540905]
+[array([682.75  , 402.6875, 141.    ]), array([-8.83828415,  3.38030244,  8.18615636])]
+episode  2 score -406.5 avg score -403.5
+ 
+Took too long
+Distance: 806.9246645567293
+Final Action: [ 1.3351781 -4.6761403 -3.4164789]
+[array([682.75  , 402.6875, 141.    ]), array([-0.61620307, -4.87040876, -2.02735772])]
+episode  3 score -404.0 avg score -403.6
+ 
+Took too long
+Distance: 815.4270611806148
+Final Action: [ -8.835493    -0.25326338 -14.786839  ]
+[array([682.75  , 402.6875, 141.    ]), array([ -7.87062242,   0.29630888, -12.23299192])]
+episode  4 score -408.3 avg score -404.5
+ 
+Took too long
+Distance: 821.0748467840879
+Final Action: [-30.167782  11.073009  28.972189]
+[array([682.75  , 402.6875, 141.    ]), array([-27.68844511,  11.41778215,  28.58480281])]
+episode  5 score -411.1 avg score -405.6
+ 
+Took too long
+Distance: 802.1263978108699
+Final Action: [ 7.7777586 -4.3906612 -7.682891 ]
+[array([682.75  , 402.6875, 141.    ]), array([ 5.36723697, -4.63279908, -7.12028085])]
+episode  6 score -401.6 avg score -405.1
+ 
+Took too long
+Distance: 815.4079681274459
+Final Action: [ -6.119333 -14.559497  13.508273]
+[array([682.75  , 402.6875, 141.    ]), array([ -3.29619911, -13.01523147,  12.94174541])]
+episode  7 score -408.3 avg score -405.5
+ 
+Took too long
+Distance: 806.2234564698499
+Final Action: [  5.7545805  -4.6175075 -19.549353 ]
+[array([682.75  , 402.6875, 141.    ]), array([  6.64845113,  -5.05209757, -16.95173028])]
+episode  8 score -403.7 avg score -405.3
+ 
+Took too long
+Distance: 814.7399976620978
+Final Action: [ -4.5789394 -10.352645   -3.1458688]
+[array([682.75  , 402.6875, 141.    ]), array([-5.70863521, -8.96494878, -3.51519619])]
+episode  9 score -408.0 avg score -405.5
+ 
+
