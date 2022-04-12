@@ -335,7 +335,7 @@ def IK(goal, q, spots, filled, origins):
         moviewriter.finish()
 
     else:
-        while np.linalg.norm(np.subtract(qOld, q)) > 0.0005 and count < threshold:
+        while np.linalg.norm(np.subtract(qOld, q)) > 0.005 and count < threshold:
             # print(np.linalg.norm(np.subtract(qOld, q)))
             count = count + 1
             # goal = tf.convert_to_tensor(goal)
@@ -350,12 +350,12 @@ def IK(goal, q, spots, filled, origins):
             p, joints, endEffector = FK(q)
 
             # check for collision
-            # collide, pt = checkCollision(p, occupied, origins)
+            collide, pt = checkCollision(p, occupied, origins)
             # if collides, return that it collided
 
             # NEVER COLLIDES. UNCOMMENT TO HAVE COLLISION
-            # if collide:
-            #     return -1, q, p  # collision, failed
+            if collide:
+                return -2, q, p  # collision, failed
 
     # if get here, success!
     # return success

@@ -143,11 +143,13 @@ class Environment(gym.Env):
 
     # reward must increase the closer it gets to goal too
     def getReward(self, action):
-        thresh = 50 # if within 50 mm close enough
+        thresh = 30 # if within 20 mm close enough
         outcome = self.outcome
         # default -1 for step
         if outcome == -1: # fail
             self.endFlag = True
+            print(self.goal)
+            print(action)
             print("Failed!")
             alpha = -0.6
             dist = self.getDist(action)
@@ -192,16 +194,20 @@ class Environment(gym.Env):
         dist = self.getDist(pt)
         return dist - prevDist
 
-    # doesn't do simulation part
+
+    # teleport step
     def step(self, action):
-        self.outcome = 1
-        self.arm = 0
+        # self.outcome = 1
+        # self.arm = 0
         self.stepCount += 1
         if self.stepCount > 300:  # exceeds limit, fails
             self.outcome = -1
         else:
+            # self.outcome, self.arm, temp = SawyerSim.IK(action, self.arm, self.spots, self.filled, self.origins)
+            self.arm = action
             occupied = SawyerSim.get3D(self.occupied)
             collide, pt = SawyerSim.checkCollision(action, occupied, self.origins)
+            self.outcome = 1 # assume success unless collide
             if collide:
                 self.outcome = -2
         info = dict()  # placeholder, add debugging info in needed
@@ -235,7 +241,7 @@ class Environment(gym.Env):
         reward = self.getReward(temp)
 
         self.endPoint = temp
-        self.state = self.minConvert(self.occupied, self.origins, self.goal)
+        self.state = self.midConvert(self.occupied, self.origins, self.goal)
 
 
         # could probably just return self??? but system wants it like this
