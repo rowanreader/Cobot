@@ -135,7 +135,7 @@ class Tile:
 # list of all tiles and their spots relative to their origin (mm)
 # only ints allowed
 # Dagger 01
-tile01 = Tile([(-3, 47), (20, 10), (-9, -42)]) # (R, Y, R)
+tile01 = Tile([(-3, 47), (20, 10), (-1, -42)]) # (R, Y, R)
 # Majora's Mask
 tile02 = Tile([(27, 10), (-5, -26), (-22, 17)]) # (K, K, R)
 # Shard

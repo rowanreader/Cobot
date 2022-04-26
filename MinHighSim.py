@@ -5,6 +5,9 @@ import random
 import numpy as np
 import sys
 import pickle
+import cdd as pcdd
+from scipy.spatial import ConvexHull
+import matplotlib.pyplot as plt
 import SawyerSim
 
 printstuff = False
@@ -73,7 +76,7 @@ def closestCluster(point, clusters):
 # takes in list of coordinates, binary list representing which are filled, and the number of clusters to find, finds most balanced set
 
 def getClusters(spots, filled, numClusters):
-    alpha = 0.5
+    alpha = 0.1
 
     num = len(spots)
     pillars = []
@@ -95,7 +98,7 @@ def getClusters(spots, filled, numClusters):
 
     if numClusters > len(range(minY, maxY)):
         if printstuff:
-            print("XRange too small for clusters, defaulting to minY")
+            print("YRange too small for clusters, defaulting to minY")
         ys = [minY] * numClusters
     # randomly place numCluster points within the bounds of min/max
     else:
@@ -105,7 +108,7 @@ def getClusters(spots, filled, numClusters):
     for k in range(numClusters):
         origin.append([xs[k], ys[k]])
 
-    thresh = 300
+    thresh = 5
     error = thresh + 1
     count = 0
     # iteratively for each pillar, pull the cluster center closest to the pillar closer
@@ -126,6 +129,13 @@ def getClusters(spots, filled, numClusters):
     #     print("Error: " + str(error))
     if printstuff == True:
         print("Cluster error: " + str(error))
+    # print(origin)
+    # print(spots)
+    # plt.scatter([x[0] for x in spots], [y[1] for y in spots], color='blue')
+    # plt.scatter(origin[0][0], origin[0][1], color='red')
+    # plt.show()
+    # print(error)
+    # print(count)
     return origin
 
     # check error size, once less than threshold (or number of iterations is too large), stop
@@ -184,9 +194,16 @@ tile17 = Tile("Tile17", [(-60, -8), (-22, 28), (16, -3), (60, -6)], outline=[(45
 # Spaceship
 tile18 = Tile("Tile18", [(-26, 32), (0, 9), (26, 32)], outline=[(55, 46), (13, -26), (7, -87), (-10, -30), (-53, 43), (0, 30)])  # (R, K, Y)
 
+tile19 = Tile("Tile19", [(-53, -47), (-1, 61), (55, -47)], outline=[(-15, 85), (-70, -55), (-81, 33)])  # (K, Y, W)
+tile20 = Tile("Tile20", [(-53, -47), (-1, 61), (55, -47)], outline=[(-15, 85), (-70, -55), (-81, 33)])  # (K, Y, W)
+
+# tiles = [tile09, tile19, tile20]
 tiles = [tile01, tile02, tile03, tile04, tile05, tile06, tile07, tile08, tile09, tile10, tile11, tile12, tile13, tile14,
          tile15, tile16, tile17, tile18]
 
+tiles1 = [tile10, tile12, tile05, tile11, tile08] # tile09, tile06
+tiles2 = [tile07, tile01, tile03, tile18, tile13, tile04]
+tiles3 = [tile14, tile17, tile02, tile16, tile15]
 
 # takes in array of coordinates and binary array indicating whether they are occupied (1) or not (0)
 # returns all spots that are occupied
@@ -212,6 +229,95 @@ def getOccupied(spots, filled):
     return occupied
 
 
+def getRotation(tile, origin, pillars):
+    # iterate through rotations, find max area
+    maxArea = 0
+    maxRotation = 0
+
+    # gotta add z component, just set to 0
+    newTile = []
+    newPillars = []
+    for i in tile.outline:
+        newTile.append([i[0], i[1], 0])
+    for i in pillars:
+        newPillars.append(np.append(i, 0))
+
+    num = len(newTile)
+    # every 5 degrees
+    for rotation in range(0, 360, 5):
+        # rotate tile points by i degrees
+        rad = np.deg2rad(rotation)
+        mat = getRotateMat(rad)
+        rotatedTile = np.empty([num, 3]) # num rows, 3 columns (x, y ,z)
+        for i in range(num):
+            # rotate and translate
+            temp = np.matmul(newTile[i][0:2], mat) + [origin[0][0], origin[0][1]]
+            rotatedTile[i] = np.append(temp, 0)
+
+        # get intersect area
+        area = getHull(rotatedTile, newPillars)
+        if area > maxArea:
+            maxArea = area
+            maxRotation = rotation
+
+    print(maxRotation)
+    return maxRotation
+
+
+def getHull(newTile, newPillars):
+    numT = len(newTile)
+    numP = len(newPillars)
+    # make the V-representation of the first cube; you have to prepend
+    # with a column of ones
+    v1 = np.column_stack((np.ones(numT), newTile))
+    # v1 = np.column_stack((np.ones(8), pts1))
+    mat = pcdd.Matrix(v1, number_type='fraction')  # use fractions if possible
+    mat.rep_type = pcdd.RepType.GENERATOR
+    poly1 = pcdd.Polyhedron(mat)
+
+    # make the V-representation of the second cube; you have to prepend
+    # with a column of ones
+    v2 = np.column_stack((np.ones(numP), newPillars))
+    # v2 = np.column_stack((np.ones(8), pts2))
+    mat = pcdd.Matrix(v2, number_type='fraction')
+    mat.rep_type = pcdd.RepType.GENERATOR
+    poly2 = pcdd.Polyhedron(mat)
+
+    # H-representation of the first cube
+    h1 = poly1.get_inequalities()
+
+    # H-representation of the second cube
+    h2 = poly2.get_inequalities()
+
+    # join the two sets of linear inequalities; this will give the intersection
+    hintersection = np.vstack((h1, h2))
+
+    # make the V-representation of the intersection
+    mat = pcdd.Matrix(hintersection, number_type='fraction')
+    mat.rep_type = pcdd.RepType.INEQUALITY
+    polyintersection = pcdd.Polyhedron(mat)
+
+    # get the vertices; they are given in a matrix prepended by a column of ones
+    vintersection = polyintersection.get_generators()
+
+    # get rid of the column of ones
+    num = len(vintersection)
+    ptsintersection = np.array([vintersection[i][1:4] for i in range(num)])
+
+    # these are the vertices of the intersection; it remains to take
+    # the convex hull
+    hull = ConvexHull(ptsintersection)
+    # plotHull(newTile, newPillars, ptsintersection)
+    return hull.volume # for 2D area is perimeter and volume is area
+
+def plotHull(hull1, hull2, intersect):
+    plt.plot(hull1[:,0], hull1[:,1], color="blue")
+    plt.plot([x[0] for x in hull2], [y[1] for y in hull2], color="green")
+    plt.plot([float(x) for x in intersect[:, 0]], [float(x) for x in intersect[:, 1]], color="red")
+
+    plt.show()
+
+
 # builds random tower
 # returns occupied spots and origin of tiles
 # can make plane based on that
@@ -222,12 +328,13 @@ def build():
     towerTiles = []
     allFilled = []
     # randomly choose 3 tiles and place in fixed origin spots
-    firstFloorId = random.sample(range(0, 18), 3)  # corresponds to index in tiles, so number 0 = tile01
-    # firstFloorId = [17, 12, 10]
+    temp1 = len(tiles1)
+    firstFloorId = random.sample(range(0, temp1), 1)  # corresponds to index in tiles, so number 0 = tile01
+    # firstFloorId = [0]
 
     taken += firstFloorId
     # firstFloorId = [2, 11, 15]
-    firstFloors = [tiles[firstFloorId[0]], tiles[firstFloorId[1]], tiles[firstFloorId[2]]]
+    firstFloors = [tiles1[firstFloorId[0]]]
     if printstuff == True:
         print(firstFloorId)
     origin1 = [[500, 100], [600, 300], [700, 0]]  # mm from origin of world coord
@@ -240,7 +347,7 @@ def build():
 
     # randomly choose level (1, 2, 3)
     levels = random.sample(range(1, 4), 1)[0]  # either 1 2 or 3
-    # levels = 1
+    levels = 3
     if printstuff == True:
         print("Going up to level " + str(levels))
     filledSpots = []
@@ -258,72 +365,6 @@ def build():
         firstFloors[0].worldSpots.append(np.append(tempSpot, getHeight(0))) # include height in the worldSpots array
 
     firstFloors[0].rotation = 0 # set rotation of 1st tile of floor
-    # check for collisions, if so, rotate all with different matrix. Repeat until no collisions
-    # collisions = being less than 2 radii away from another point
-    collide = True
-    count = 0
-    temp = firstFloors[1].spots  # get array of spots
-    # print("2nd tile")
-    while collide:
-        collide = False
-        i = temp[count]  # iterate through current tile in local coordinates
-        newCoord = tupleTransform(i, origin1[1], rotate)
-        for j in firstSpotsWorld:
-            if checkCollide(j, newCoord) == True:
-
-                collide = True
-                count = 0  # have to reset and check against all coordinates again
-                # adjust rotation matrix
-                angle += 0.0872665
-                if printstuff == True:
-                    print("Rotate 1.2! " + str(angle))
-                rotate = getRotateMat(angle)
-                if angle > np.pi:
-                    print("no good position found for tile 1.2")
-                    return -1, -1, -1, -1
-                break
-            count += 1
-    # made it all the way through without collision, set angle
-    firstFloors[1].rotation = angle
-    # add to world spots
-    for spot in firstFloors[1].spots:
-        tempSpot = tupleTransform(spot, origin1[1], rotate)
-        firstSpotsWorld.append(tempSpot)  # just append, don't need to worry about distinguishing 1st and 2nd floor
-        firstFloors[1].worldSpots.append(np.append(tempSpot, getHeight(0)))
-
-    # on to the 3rd tile of 1st floor - pretty much same as 2nd tile
-    collide = True
-    count = 0
-    rotate = np.identity(2)
-    angle = 0
-    temp = firstFloors[2].spots  # get array of spots
-    # print("3rd tile")
-    while collide:
-        collide = False
-        i = temp[count]  # iterate through current tile in local coordinates
-        newCoord = tupleTransform(i, origin1[2], rotate)
-        for j in firstSpotsWorld:
-            if checkCollide(j, newCoord) == True:
-
-                collide = True
-                count = 0  # have to reset and check against all coordinates again
-                # adjust rotation matrix
-                angle += 0.0872665
-                if printstuff == True:
-                    print("Rotate 1.3! " + str(angle))
-                rotate = getRotateMat(angle)
-                if angle > np.pi:
-                    print("no good position found for tile 1.3")
-                    return -1, -1, -1, -1
-                break
-            count += 1
-    # made it all the way through without collision, set angle
-    firstFloors[2].rotation = angle
-    # add to world spots
-    for spot in firstFloors[2].spots:
-        tempSpot = tupleTransform(spot, origin1[2], rotate)
-        firstSpotsWorld.append(tempSpot)  # just append, don't need to worry about distinguishing 1st and 2nd floor
-        firstFloors[2].worldSpots.append(np.append(tempSpot, getHeight(0)))
 
     allWorldSpots.append(firstSpotsWorld)
 
@@ -339,7 +380,6 @@ def build():
     if levels == 1:
         # pick number between 0 and the number of pillars
         numChosen1 = random.sample(range(0, numPillars1), 1)[0]
-        numChosen1 = numPillars1 # select all
 
     elif levels == 2:
         numChosen1 = random.sample(range(numPillars1 // 2 - 1, numPillars1), 1)[0]  # limit the number of pillars to be between half and all
@@ -347,6 +387,7 @@ def build():
     elif levels == 3:
         numChosen1 = random.sample(range(int(numPillars1 * 0.8) - 1, numPillars1), 1)[0]  # limit the number of pillars to be between half and all
 
+    numChosen1 = numPillars1  # select all
     chosen1 = random.sample(range(0, numPillars1), numChosen1)
 
     # set chosen pillars to 1 (filled)
@@ -369,18 +410,22 @@ def build():
     if levels > 1:
 
         # for second floor either 2 or 3 tiles
-        numTiles2 = random.sample(range(2, 4), 1)[0]
-        range2 = [x for x in range(0,18) if x not in taken]
-        secondFloorId = random.sample(range2, numTiles2)
+        # numTiles2 = random.sample(range(2, 4), 1)[0]
+        # numTiles2 = 1
+        # range2 = [x for x in range(0,18) if x not in taken]
+        temp2 = len(tiles2)
+        secondFloorId = random.sample(range(0, temp2), 1)
+
+        # secondFloorId = [1]
         taken += secondFloorId
         if printstuff == True:
             print(secondFloorId)
         secondFloors = []
         for i in secondFloorId:
-            secondFloors.append(tiles[i])
+            secondFloors.append(tiles2[i])
 
-        origin2 = getClusters(firstSpotsWorld, filled1, numTiles2)
-
+        origin2 = getClusters(firstSpotsWorld, filled1, 1)
+        # origin2 = origin1
         count = 0
         for i in secondFloors:
             i.origin = np.append(origin2[count], getHeight(1))
@@ -397,69 +442,9 @@ def build():
             secondSpotsWorld.append(tempSpot)
             secondFloors[0].worldSpots.append(np.append(tempSpot, getHeight(1)))
 
+        # given a tile, origin (centriod) and POS, find rotation of max overlap using convexhull
+        angle = getRotation(secondFloors[0], origin2, firstSpotsWorld)
         secondFloors[0].rotation = angle # this is actually the most recent angle from 1st floor
-        collide = True
-        count = 0
-        temp = secondFloors[1].spots
-        rotate = np.identity(2)
-        angle = 0
-        while collide:
-            collide = False
-            i = temp[count]  # iterate through current tile in local coordinates
-            newCoord = tupleTransform(i, origin2[1], rotate)
-            for j in secondSpotsWorld:
-                if checkCollide(j, newCoord) == True:
-                    collide = True
-                    count = 0  # have to reset and check against all coordinates again
-                    # adjust rotation matrix
-                    angle += 0.0872665
-                    if printstuff == True:
-                        print("Rotate 2.2! " + str(angle))
-                    rotate = getRotateMat(angle)
-                    if angle > np.pi:
-                        print("no good position found for tile 2.2")
-                        return -1, -1, -1, -1
-                    break
-                count += 1
-        # made it all the way through without collision, set angle
-        secondFloors[1].rotation = angle
-        # add to world spots
-        for spot in secondFloors[1].spots:
-            tempSpot = tupleTransform(spot, origin2[1], rotate)
-            secondSpotsWorld.append(tempSpot)  # just append, don't need to worry about distinguishing 1st and 2nd floor
-            secondFloors[1].worldSpots.append(np.append(tempSpot, getHeight(1)))
-
-        if numTiles2 == 3:  # must add 3rd tile
-            collide = True
-            count = 0
-            temp = secondFloors[2].spots
-            rotate = np.identity(2)
-            angle = 0
-            while collide:
-                collide = False
-                i = temp[count]  # iterate through current tile in local coordinates
-                newCoord = tupleTransform(i, origin2[2], rotate)
-                for j in secondSpotsWorld:
-                    if checkCollide(j, newCoord) == True:
-                        collide = True
-                        count = 0  # have to reset and check against all coordinates again
-                        # adjust rotation matrix
-                        angle += 0.0872665
-                        if printstuff == True:
-                            print("Rotate 2.2! " + str(angle))
-                        rotate = getRotateMat(angle)
-                        if angle > np.pi:
-                            print("no good position found for tile 2.3")
-                            return -1, -1, -1, -1
-                        break
-                    count += 1
-            # made it all the way through without collision, set angle
-            secondFloors[2].rotation = angle
-            # add to world spots
-            for spot in secondFloors[2].spots:
-                tempSpot = tupleTransform(spot, origin2[2], rotate)
-                secondSpotsWorld.append(tempSpot)  # just append, don't need to worry about distinguishing 1st and 2nd floor
-                secondFloors[2].worldSpots.append(np.append(tempSpot, getHeight(1)))
 
         allWorldSpots.append(secondSpotsWorld)
         if printstuff == True:
@@ -470,18 +455,16 @@ def build():
         filled2 = np.zeros(numPillars2)
 
         if levels == 2:  # 0 to 100%
-            numChosen2 = random.sample(range(0, numPillars2), 1)[
-                0]  # limit the number of pillars to be between half and all
-            chosen2 = random.sample(range(0, numPillars2), numChosen2)
-            for i in chosen2:
-                filled2[i] = 1
+            numChosen2 = random.sample(range(0, numPillars2), 1)[0]  # limit the number of pillars to be between half and all
+
 
         elif levels == 3:  # 60% to 100%
-            numChosen2 = random.sample(range(int(numPillars2 * 0.6) - 1, numPillars2), 1)[
-                0]  # limit the number of pillars to be between half and all
-            chosen2 = random.sample(range(0, numPillars2), numChosen2)
-            for i in chosen2:
-                filled2[i] = 1
+            numChosen2 = random.sample(range(int(numPillars2 * 0.6) - 1, numPillars2), 1)[0]  # limit the number of pillars to be between half and all
+
+        numChosen2 = numPillars2 # select all
+        chosen2 = random.sample(range(0, numPillars2), numChosen2)
+        for i in chosen2:
+            filled2[i] = 1
 
 
         count = 0
@@ -498,16 +481,19 @@ def build():
     # same as prev
     if levels > 2:
         # for third floor either 1 or 2 tiles
-        numTiles3 = random.sample(range(1, 3), 1)[0]
-        range3 = [x for x in range(0, 18) if x not in taken]
-        thirdFloorId = random.sample(range3, numTiles3)
+        # numTiles3 = random.sample(range(1, 3), 1)[0]
+        # range3 = [x for x in range(0, 18) if x not in taken]
+        temp3 = len(tiles3)
+        thirdFloorId = random.sample(range(0, temp3), 1)
+        # thirdFloorId = [2]
         if printstuff == True:
             print(thirdFloorId)
         thirdFloors = []
         for i in thirdFloorId:
-            thirdFloors.append(tiles[i])
+            thirdFloors.append(tiles3[i])
 
-        origin3 = getClusters(secondSpotsWorld, filled2, numTiles3)
+        origin3 = getClusters(secondSpotsWorld, filled2, 1)
+        # origin3 = origin2
         count = 0
         for i in thirdFloors:
             i.origin = np.append(origin3[count], getHeight(2))
@@ -525,38 +511,8 @@ def build():
             thirdSpotsWorld.append(tempSpot)
             thirdFloors[0].worldSpots.append(np.append(tempSpot, getHeight(2)))
 
+        angle = getRotation(thirdFloors[0], origin3, secondSpotsWorld)
         thirdFloors[0].rotation = angle
-
-        if numTiles3 == 2:
-            collide = True
-            count = 0
-            temp = thirdFloors[1].spots
-            angle = 0
-            while collide:
-                collide = False
-                i = temp[count]  # iterate through current tile in local coordinates
-                newCoord = tupleTransform(i, origin3[1], rotate)
-                for j in thirdSpotsWorld:
-                    if checkCollide(j, newCoord) == True:
-                        collide = True
-                        count = 0  # have to reset and check against all coordinates again
-                        # adjust rotation matrix
-                        angle += 0.0872665
-                        if printstuff == True:
-                            print("Rotate 3.2! " + str(angle))
-                        rotate = getRotateMat(angle)
-                        if angle > np.pi:
-                            print("no good position found for tile 3.2")
-                            return -1, -1, -1, -1
-                        break
-                    count += 1
-            # made it all the way through without collision, set angle
-            thirdFloors[1].rotation = angle
-            # add to world spots
-            for spot in thirdFloors[1].spots:
-                tempSpot = tupleTransform(spot, origin3[1], rotate)
-                thirdSpotsWorld.append(tempSpot)  # just append, don't need to worry about distinguishing 1st and 2nd floor
-                thirdFloors[1].worldSpots.append(np.append(tempSpot, getHeight(2)))
 
         allWorldSpots.append(thirdSpotsWorld)
         if printstuff == True:
@@ -567,6 +523,7 @@ def build():
         filled3 = np.zeros(numPillars3)
         # need at least 1 free
         numChosen3 = random.sample(range(0, numPillars3), 1)[0]
+
         chosen3 = random.sample(range(0, numPillars3), numChosen3)
         for i in chosen3:
             filled3[i] = 1
@@ -628,7 +585,7 @@ def build():
 
 if __name__ == "__main__":
     numTowers = 1
-    fileName = "TowerSim_" + str(numTowers) + ".txt"
+    fileName = "MinTowerSim_" + str(numTowers) + ".txt"
     file = open(fileName, 'wb')
     for _ in range(numTowers):
     #     goal = [-1]

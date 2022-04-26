@@ -143,13 +143,13 @@ class Environment(gym.Env):
 
     # reward must increase the closer it gets to goal too
     def getReward(self, action):
-        thresh = 30 # if within 20 mm close enough
+        thresh = 30 # if within 30 mm close enough
         outcome = self.outcome
         # default -1 for step
         if outcome == -1: # fail
             self.endFlag = True
-            print(self.goal)
-            print(action)
+            # print(self.goal)
+            # print(action)
             print("Failed!")
             alpha = -0.6
             dist = self.getDist(action)
@@ -235,10 +235,11 @@ class Environment(gym.Env):
                 break
 
         self.stepCount += 1
-        if self.stepCount > 300:  # exceeds limit, fails
+        if self.stepCount > 100:  # exceeds limit, fails
             self.outcome = -1
         info = dict() # placeholder, add debugging info in needed
         reward = self.getReward(temp)
+        # print(temp)
 
         self.endPoint = temp
         self.state = self.midConvert(self.occupied, self.origins, self.goal)
