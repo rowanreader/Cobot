@@ -56,7 +56,7 @@ prod = v * npmat   # you can perform linear algebra operations with numpy and th
 mb.SetMatr(v.tolist())    # create a ChMatrixDynamicD from the numpy eigenvectors
 mr = chrono.ChMatrix33D()
 mr.SetMatr([[1,2,3], [4,5,6], [7,8,9]])
-print  (mr*my_vect1);
+print  (mr*my_vect1)
 
 
 # Test frames -

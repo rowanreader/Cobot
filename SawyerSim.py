@@ -215,7 +215,7 @@ def getLimits(centers):
 
 def checkCollision(p, spots, origins):
     # check if p is clear within set rad
-    wristRad = 30 # in mm, so 5 cm
+    wristRad = 30 # in mm, so 3 cm
     # wrist represented by sphere around p with rad 100
     # each pillar/spot is a coordinate in 3D (height based on level). It extends a certain height up and has rad 10
     for k in spots: # 3 levels

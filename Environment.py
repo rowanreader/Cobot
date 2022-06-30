@@ -17,7 +17,7 @@ class Environment(gym.Env):
         self.low = np.array([0, 0, 0])  # x, y, z
         self.high = np.array([limit, limit, limit])
         # shape = np.int
-        self.obsLen = 51 # how big the state is
+        self.obsLen = 51  # how big the state is
         self.observation_space = spaces.Box(-limit, limit, shape=(self.obsLen,)) # this is filled spots, origins, and goal
         self.action_space = spaces.Box(self.low, self.high, shape=(3,))
         self.reward_range = (-3000, 300) #reward_range
@@ -86,7 +86,7 @@ class Environment(gym.Env):
             floorCount += 1
 
         # get origins
-        for k in range(3): # 3 floors
+        for k in range(3):  # 3 floors
             level = np.mod(k, levels)
             floorOrigins = origins[level]
             tiles = len(floorOrigins)
