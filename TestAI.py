@@ -17,7 +17,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 warnings.filterwarnings("ignore") # get rid of warnings
 
 # run = "1024_IK"
-run = "1024_Teleport"
+run = "1024_TeleportTemp"
 prerun = "1024_Teleport"
 modelName = "SAC"
 num = 1000
@@ -40,15 +40,14 @@ policy_kwargs = dict(activation_fn=th.nn.Tanh, net_arch=[1024, 1024,  512, 512])
 action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.5 * np.ones(n_actions))
 
 # model = SAC.load(modelName + "_sawyer_" + ver + run + "_best/best_model", env=env) # train more on pretrained
-model = SAC("MlpPolicy", env, policy_kwargs=policy_kwargs, learning_rate=0.0003, action_noise=action_noise, verbose=1)
+model = SAC("MlpPolicy", env, policy_kwargs=policy_kwargs, learning_starts=10, learning_rate=0.0003, action_noise=action_noise, verbose=1)
 #
 eval_callback = EvalCallback(env, best_model_save_path=modelName + "_sawyer_" + ver + run + "_best",
                              log_path='./logs/', eval_freq=1000,
                              deterministic=False, render=False)
 model.learn(total_timesteps=250000, log_interval=50, callback=eval_callback) # for ppo, sac
 # # model.learn(total_timesteps=40000, log_interval=50, callback=eval_callback)
-# #
-#
+
 model.save(modelName + "_sawyer_" + ver + run)
 print("Saved!\n")
 #
