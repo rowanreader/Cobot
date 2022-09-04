@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 def plot_average_curve(x, scores, title, figure_file, y):
     running_avg = np.zeros(len(scores))
@@ -24,3 +25,8 @@ def plot_learning_curve(x, scores, title, figure_file, y):
     plt.ylabel(y)
     # plt.title('Running average of previous 100 scores')
     plt.savefig(figure_file)
+
+def saveData(data, name):
+    file = open(name, 'wb')
+    pickle.dump(data, file)
+    file.close()

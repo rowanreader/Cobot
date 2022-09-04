@@ -8,6 +8,7 @@ import TowerSim as tower
 import random
 import tensorflow as tf
 import sys
+import pickle
 import math
 
 
@@ -111,7 +112,7 @@ def FK(angles):
     # B = tf.cast([[claw], [0], [claw], [1]], tf.float32)
     # C = tf.cast([[-claw], [0], [0], [1]], tf.float32)
     # D = tf.cast([[-claw], [0], [claw], [1]], tf.float32)
-    # 
+    #
     # A = tf.matmul(T1P, A)
     # B = tf.matmul(T1P, B)
     # C = tf.matmul(T1P, C)
@@ -147,9 +148,8 @@ def Jacobian(angles):
     l5 = 4000
     l6 = 1363
     l7 = 1337.5
-    jacob = [[l4*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3)) - l5*(tf.cos(th2)*tf.cos(th4)*tf.sin(th1) - tf.cos(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th3)*tf.sin(th1)*tf.sin(th2)*tf.sin(th4)) - 81*tf.sin(th1) + l6*(tf.sin(th5)*(tf.cos(th2)*tf.sin(th1)*tf.sin(th4) + tf.cos(th1)*tf.cos(th4)*tf.sin(th3) - tf.cos(th3)*tf.cos(th4)*tf.sin(th1)*tf.sin(th2)) - tf.cos(th5)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3))) - l7*(tf.cos(th6)*(tf.cos(th2)*tf.cos(th4)*tf.sin(th1) - tf.cos(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th3)*tf.sin(th1)*tf.sin(th2)*tf.sin(th4)) + tf.sin(th6)*(tf.cos(th5)*(tf.cos(th2)*tf.sin(th1)*tf.sin(th4) + tf.cos(th1)*tf.cos(th4)*tf.sin(th3) - tf.cos(th3)*tf.cos(th4)*tf.sin(th1)*tf.sin(th2)) + tf.sin(th5)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3)))) - l3*tf.cos(th2)*tf.sin(th1), l6*(tf.sin(th5)*(tf.cos(th1)*tf.sin(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th2)*tf.cos(th3)*tf.cos(th4)) + tf.cos(th1)*tf.cos(th2)*tf.cos(th5)*tf.sin(th3)) - l7*(tf.cos(th6)*(tf.cos(th1)*tf.cos(th4)*tf.sin(th2) - tf.cos(th1)*tf.cos(th2)*tf.cos(th3)*tf.sin(th4)) + tf.sin(th6)*(tf.cos(th5)*(tf.cos(th1)*tf.sin(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th2)*tf.cos(th3)*tf.cos(th4)) - tf.cos(th1)*tf.cos(th2)*tf.sin(th3)*tf.sin(th5))) - l5*(tf.cos(th1)*tf.cos(th4)*tf.sin(th2) - tf.cos(th1)*tf.cos(th2)*tf.cos(th3)*tf.sin(th4)) - l3*tf.cos(th1)*tf.sin(th2) - l4*tf.cos(th1)*tf.cos(th2)*tf.sin(th3), l6*(tf.cos(th5)*(tf.sin(th1)*tf.sin(th3) + tf.cos(th1)*tf.cos(th3)*tf.sin(th2)) + tf.cos(th4)*tf.sin(th5)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3))) - l4*(tf.sin(th1)*tf.sin(th3) + tf.cos(th1)*tf.cos(th3)*tf.sin(th2)) + l7*(tf.sin(th6)*(tf.sin(th5)*(tf.sin(th1)*tf.sin(th3) + tf.cos(th1)*tf.cos(th3)*tf.sin(th2)) - tf.cos(th4)*tf.cos(th5)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3))) + tf.cos(th6)*tf.sin(th4)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3))) + l5*tf.sin(th4)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3)),   l7*(tf.cos(th6)*(tf.cos(th4)*tf.sin(th1)*tf.sin(th3) - tf.cos(th1)*tf.cos(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th3)*tf.cos(th4)*tf.sin(th2)) + tf.cos(th5)*tf.sin(th6)*(tf.sin(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th1)*tf.cos(th2)*tf.cos(th4) + tf.cos(th1)*tf.cos(th3)*tf.sin(th2)*tf.sin(th4))) + l5*(tf.cos(th4)*tf.sin(th1)*tf.sin(th3) - tf.cos(th1)*tf.cos(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th3)*tf.cos(th4)*tf.sin(th2)) - l6*tf.sin(th5)*(tf.sin(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th1)*tf.cos(th2)*tf.cos(th4) + tf.cos(th1)*tf.cos(th3)*tf.sin(th2)*tf.sin(th4)),   l6*(tf.cos(th5)*(tf.cos(th4)*tf.sin(th1)*tf.sin(th3) - tf.cos(th1)*tf.cos(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th3)*tf.cos(th4)*tf.sin(th2)) + tf.sin(th5)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3))) + l7*tf.sin(th6)*(tf.sin(th5)*(tf.cos(th4)*tf.sin(th1)*tf.sin(th3) - tf.cos(th1)*tf.cos(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th3)*tf.cos(th4)*tf.sin(th2)) - tf.cos(th5)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3))), -l7*(tf.sin(th6)*(tf.sin(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th1)*tf.cos(th2)*tf.cos(th4) + tf.cos(th1)*tf.cos(th3)*tf.sin(th2)*tf.sin(th4)) + tf.cos(th6)*(tf.cos(th5)*(tf.cos(th4)*tf.sin(th1)*tf.sin(th3) - tf.cos(th1)*tf.cos(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th3)*tf.cos(th4)*tf.sin(th2)) + tf.sin(th5)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3)))), 0],
-    [81*tf.cos(th1) + l5*(tf.sin(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th1)*tf.cos(th2)*tf.cos(th4) + tf.cos(th1)*tf.cos(th3)*tf.sin(th2)*tf.sin(th4)) + l4*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3)) + l6*(tf.sin(th5)*(tf.cos(th4)*tf.sin(th1)*tf.sin(th3) - tf.cos(th1)*tf.cos(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th3)*tf.cos(th4)*tf.sin(th2)) - tf.cos(th5)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3))) + l7*(tf.cos(th6)*(tf.sin(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th1)*tf.cos(th2)*tf.cos(th4) + tf.cos(th1)*tf.cos(th3)*tf.sin(th2)*tf.sin(th4)) - tf.sin(th6)*(tf.cos(th5)*(tf.cos(th4)*tf.sin(th1)*tf.sin(th3) - tf.cos(th1)*tf.cos(th2)*tf.sin(th4) + tf.cos(th1)*tf.cos(th3)*tf.cos(th4)*tf.sin(th2)) + tf.sin(th5)*(tf.cos(th3)*tf.sin(th1) - tf.cos(th1)*tf.sin(th2)*tf.sin(th3)))) + l3*tf.cos(th1)*tf.cos(th2),                                             -tf.sin(th1)*(l3*tf.sin(th2) + l4*tf.cos(th2)*tf.sin(th3) + l5*tf.cos(th4)*tf.sin(th2) - l5*tf.cos(th2)*tf.cos(th3)*tf.sin(th4) - l6*tf.cos(th2)*tf.cos(th5)*tf.sin(th3) + l7*tf.cos(th4)*tf.cos(th6)*tf.sin(th2) - l6*tf.sin(th2)*tf.sin(th4)*tf.sin(th5) - l6*tf.cos(th2)*tf.cos(th3)*tf.cos(th4)*tf.sin(th5) - l7*tf.cos(th2)*tf.cos(th3)*tf.cos(th6)*tf.sin(th4) - l7*tf.cos(th2)*tf.sin(th3)*tf.sin(th5)*tf.sin(th6) + l7*tf.cos(th5)*tf.sin(th2)*tf.sin(th4)*tf.sin(th6) + l7*tf.cos(th2)*tf.cos(th3)*tf.cos(th4)*tf.cos(th5)*tf.sin(th6)), l4*(tf.cos(th1)*tf.sin(th3) - tf.cos(th3)*tf.sin(th1)*tf.sin(th2)) - l6*(tf.cos(th5)*(tf.cos(th1)*tf.sin(th3) - tf.cos(th3)*tf.sin(th1)*tf.sin(th2)) + tf.cos(th4)*tf.sin(th5)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3))) - l7*(tf.sin(th6)*(tf.sin(th5)*(tf.cos(th1)*tf.sin(th3) - tf.cos(th3)*tf.sin(th1)*tf.sin(th2)) - tf.cos(th4)*tf.cos(th5)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3))) + tf.cos(th6)*tf.sin(th4)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3))) - l5*tf.sin(th4)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3)), - l5*(tf.cos(th2)*tf.sin(th1)*tf.sin(th4) + tf.cos(th1)*tf.cos(th4)*tf.sin(th3) - tf.cos(th3)*tf.cos(th4)*tf.sin(th1)*tf.sin(th2)) - l7*(tf.cos(th6)*(tf.cos(th2)*tf.sin(th1)*tf.sin(th4) + tf.cos(th1)*tf.cos(th4)*tf.sin(th3) - tf.cos(th3)*tf.cos(th4)*tf.sin(th1)*tf.sin(th2)) - tf.cos(th5)*tf.sin(th6)*(tf.cos(th2)*tf.cos(th4)*tf.sin(th1) - tf.cos(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th3)*tf.sin(th1)*tf.sin(th2)*tf.sin(th4))) - l6*tf.sin(th5)*(tf.cos(th2)*tf.cos(th4)*tf.sin(th1) - tf.cos(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th3)*tf.sin(th1)*tf.sin(th2)*tf.sin(th4)), - l6*(tf.cos(th5)*(tf.cos(th2)*tf.sin(th1)*tf.sin(th4) + tf.cos(th1)*tf.cos(th4)*tf.sin(th3) - tf.cos(th3)*tf.cos(th4)*tf.sin(th1)*tf.sin(th2)) + tf.sin(th5)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3))) - l7*tf.sin(th6)*(tf.sin(th5)*(tf.cos(th2)*tf.sin(th1)*tf.sin(th4) + tf.cos(th1)*tf.cos(th4)*tf.sin(th3) - tf.cos(th3)*tf.cos(th4)*tf.sin(th1)*tf.sin(th2)) - tf.cos(th5)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3))), -l7*(tf.sin(th6)*(tf.cos(th2)*tf.cos(th4)*tf.sin(th1) - tf.cos(th1)*tf.sin(th3)*tf.sin(th4) + tf.cos(th3)*tf.sin(th1)*tf.sin(th2)*tf.sin(th4)) - tf.cos(th6)*(tf.cos(th5)*(tf.cos(th2)*tf.sin(th1)*tf.sin(th4) + tf.cos(th1)*tf.cos(th4)*tf.sin(th3) - tf.cos(th3)*tf.cos(th4)*tf.sin(th1)*tf.sin(th2)) + tf.sin(th5)*(tf.cos(th1)*tf.cos(th3) + tf.sin(th1)*tf.sin(th2)*tf.sin(th3)))), 0],
-     [0, l4*tf.sin(th2)*tf.sin(th3) - l5*tf.cos(th2)*tf.cos(th4) - l3*tf.cos(th2) - l7*tf.cos(th2)*tf.cos(th4)*tf.cos(th6) - l5*tf.cos(th3)*tf.sin(th2)*tf.sin(th4) - l6*tf.cos(th5)*tf.sin(th2)*tf.sin(th3) + l6*tf.cos(th2)*tf.sin(th4)*tf.sin(th5) - l6*tf.cos(th3)*tf.cos(th4)*tf.sin(th2)*tf.sin(th5) - l7*tf.cos(th3)*tf.cos(th6)*tf.sin(th2)*tf.sin(th4) - l7*tf.cos(th2)*tf.cos(th5)*tf.sin(th4)*tf.sin(th6) - l7*tf.sin(th2)*tf.sin(th3)*tf.sin(th5)*tf.sin(th6) + l7*tf.cos(th3)*tf.cos(th4)*tf.cos(th5)*tf.sin(th2)*tf.sin(th6), -tf.cos(th2)*(l4*tf.cos(th3) - l6*tf.cos(th3)*tf.cos(th5) + l5*tf.sin(th3)*tf.sin(th4) + l6*tf.cos(th4)*tf.sin(th3)*tf.sin(th5) + l7*tf.cos(th6)*tf.sin(th3)*tf.sin(th4) - l7*tf.cos(th3)*tf.sin(th5)*tf.sin(th6) - l7*tf.cos(th4)*tf.cos(th5)*tf.sin(th3)*tf.sin(th6)),                                                                                                                                                      l5*tf.sin(th2)*tf.sin(th4) + l5*tf.cos(th2)*tf.cos(th3)*tf.cos(th4) + l6*tf.cos(th4)*tf.sin(th2)*tf.sin(th5) + l7*tf.cos(th6)*tf.sin(th2)*tf.sin(th4) + l7*tf.cos(th2)*tf.cos(th3)*tf.cos(th4)*tf.cos(th6) - l6*tf.cos(th2)*tf.cos(th3)*tf.sin(th4)*tf.sin(th5) - l7*tf.cos(th4)*tf.cos(th5)*tf.sin(th2)*tf.sin(th6) + l7*tf.cos(th2)*tf.cos(th3)*tf.cos(th5)*tf.sin(th4)*tf.sin(th6), l6*tf.cos(th5)*tf.sin(th2)*tf.sin(th4) - l6*tf.cos(th2)*tf.sin(th3)*tf.sin(th5) + l6*tf.cos(th2)*tf.cos(th3)*tf.cos(th4)*tf.cos(th5) + l7*tf.cos(th2)*tf.cos(th5)*tf.sin(th3)*tf.sin(th6) + l7*tf.sin(th2)*tf.sin(th4)*tf.sin(th5)*tf.sin(th6) + l7*tf.cos(th2)*tf.cos(th3)*tf.cos(th4)*tf.sin(th5)*tf.sin(th6), l7*tf.cos(th4)*tf.sin(th2)*tf.sin(th6) - l7*tf.cos(th2)*tf.cos(th3)*tf.sin(th4)*tf.sin(th6) + l7*tf.cos(th2)*tf.cos(th6)*tf.sin(th3)*tf.sin(th5) - l7*tf.cos(th5)*tf.cos(th6)*tf.sin(th2)*tf.sin(th4) - l7*tf.cos(th2)*tf.cos(th3)*tf.cos(th4)*tf.cos(th5)*tf.cos(th6), 0]]
+    jacob = [[l4*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3)) - l5*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4)) - 81*np.sin(th1) + l6*(np.sin(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) - np.cos(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) - l7*(np.cos(th6)*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4)) + np.sin(th6)*(np.cos(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) + np.sin(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3)))) - l3*np.cos(th2)*np.sin(th1), l6*(np.sin(th5)*(np.cos(th1)*np.sin(th2)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th3)*np.cos(th4)) + np.cos(th1)*np.cos(th2)*np.cos(th5)*np.sin(th3)) - l7*(np.cos(th6)*(np.cos(th1)*np.cos(th4)*np.sin(th2) - np.cos(th1)*np.cos(th2)*np.cos(th3)*np.sin(th4)) + np.sin(th6)*(np.cos(th5)*(np.cos(th1)*np.sin(th2)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th3)*np.cos(th4)) - np.cos(th1)*np.cos(th2)*np.sin(th3)*np.sin(th5))) - l5*(np.cos(th1)*np.cos(th4)*np.sin(th2) - np.cos(th1)*np.cos(th2)*np.cos(th3)*np.sin(th4)) - l3*np.cos(th1)*np.sin(th2) - l4*np.cos(th1)*np.cos(th2)*np.sin(th3), l6*(np.cos(th5)*(np.sin(th1)*np.sin(th3) + np.cos(th1)*np.cos(th3)*np.sin(th2)) + np.cos(th4)*np.sin(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) - l4*(np.sin(th1)*np.sin(th3) + np.cos(th1)*np.cos(th3)*np.sin(th2)) + l7*(np.sin(th6)*(np.sin(th5)*(np.sin(th1)*np.sin(th3) + np.cos(th1)*np.cos(th3)*np.sin(th2)) - np.cos(th4)*np.cos(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) + np.cos(th6)*np.sin(th4)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) + l5*np.sin(th4)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3)),   l7*(np.cos(th6)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) + np.cos(th5)*np.sin(th6)*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4))) + l5*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) - l6*np.sin(th5)*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4)),   l6*(np.cos(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) + np.sin(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) + l7*np.sin(th6)*(np.sin(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) - np.cos(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))), -l7*(np.sin(th6)*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4)) + np.cos(th6)*(np.cos(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) + np.sin(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3)))), 0],    [81*np.cos(th1) + l5*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4)) + l4*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3)) + l6*(np.sin(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) - np.cos(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3))) + l7*(np.cos(th6)*(np.sin(th1)*np.sin(th3)*np.sin(th4) + np.cos(th1)*np.cos(th2)*np.cos(th4) + np.cos(th1)*np.cos(th3)*np.sin(th2)*np.sin(th4)) - np.sin(th6)*(np.cos(th5)*(np.cos(th4)*np.sin(th1)*np.sin(th3) - np.cos(th1)*np.cos(th2)*np.sin(th4) + np.cos(th1)*np.cos(th3)*np.cos(th4)*np.sin(th2)) + np.sin(th5)*(np.cos(th3)*np.sin(th1) - np.cos(th1)*np.sin(th2)*np.sin(th3)))) + l3*np.cos(th1)*np.cos(th2),                                             -np.sin(th1)*(l3*np.sin(th2) + l4*np.cos(th2)*np.sin(th3) + l5*np.cos(th4)*np.sin(th2) - l5*np.cos(th2)*np.cos(th3)*np.sin(th4) - l6*np.cos(th2)*np.cos(th5)*np.sin(th3) + l7*np.cos(th4)*np.cos(th6)*np.sin(th2) - l6*np.sin(th2)*np.sin(th4)*np.sin(th5) - l6*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.sin(th5) - l7*np.cos(th2)*np.cos(th3)*np.cos(th6)*np.sin(th4) - l7*np.cos(th2)*np.sin(th3)*np.sin(th5)*np.sin(th6) + l7*np.cos(th5)*np.sin(th2)*np.sin(th4)*np.sin(th6) + l7*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.cos(th5)*np.sin(th6)), l4*(np.cos(th1)*np.sin(th3) - np.cos(th3)*np.sin(th1)*np.sin(th2)) - l6*(np.cos(th5)*(np.cos(th1)*np.sin(th3) - np.cos(th3)*np.sin(th1)*np.sin(th2)) + np.cos(th4)*np.sin(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) - l7*(np.sin(th6)*(np.sin(th5)*(np.cos(th1)*np.sin(th3) - np.cos(th3)*np.sin(th1)*np.sin(th2)) - np.cos(th4)*np.cos(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) + np.cos(th6)*np.sin(th4)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) - l5*np.sin(th4)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3)), - l5*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) - l7*(np.cos(th6)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) - np.cos(th5)*np.sin(th6)*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4))) - l6*np.sin(th5)*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4)), - l6*(np.cos(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) + np.sin(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))) - l7*np.sin(th6)*(np.sin(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) - np.cos(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3))), -l7*(np.sin(th6)*(np.cos(th2)*np.cos(th4)*np.sin(th1) - np.cos(th1)*np.sin(th3)*np.sin(th4) + np.cos(th3)*np.sin(th1)*np.sin(th2)*np.sin(th4)) - np.cos(th6)*(np.cos(th5)*(np.cos(th2)*np.sin(th1)*np.sin(th4) + np.cos(th1)*np.cos(th4)*np.sin(th3) - np.cos(th3)*np.cos(th4)*np.sin(th1)*np.sin(th2)) + np.sin(th5)*(np.cos(th1)*np.cos(th3) + np.sin(th1)*np.sin(th2)*np.sin(th3)))), 0],     [0, l4*np.sin(th2)*np.sin(th3) - l5*np.cos(th2)*np.cos(th4) - l3*np.cos(th2) - l7*np.cos(th2)*np.cos(th4)*np.cos(th6) - l5*np.cos(th3)*np.sin(th2)*np.sin(th4) - l6*np.cos(th5)*np.sin(th2)*np.sin(th3) + l6*np.cos(th2)*np.sin(th4)*np.sin(th5) - l6*np.cos(th3)*np.cos(th4)*np.sin(th2)*np.sin(th5) - l7*np.cos(th3)*np.cos(th6)*np.sin(th2)*np.sin(th4) - l7*np.cos(th2)*np.cos(th5)*np.sin(th4)*np.sin(th6) - l7*np.sin(th2)*np.sin(th3)*np.sin(th5)*np.sin(th6) + l7*np.cos(th3)*np.cos(th4)*np.cos(th5)*np.sin(th2)*np.sin(th6), -np.cos(th2)*(l4*np.cos(th3) - l6*np.cos(th3)*np.cos(th5) + l5*np.sin(th3)*np.sin(th4) + l6*np.cos(th4)*np.sin(th3)*np.sin(th5) + l7*np.cos(th6)*np.sin(th3)*np.sin(th4) - l7*np.cos(th3)*np.sin(th5)*np.sin(th6) - l7*np.cos(th4)*np.cos(th5)*np.sin(th3)*np.sin(th6)),                                                                                                                                                      l5*np.sin(th2)*np.sin(th4) + l5*np.cos(th2)*np.cos(th3)*np.cos(th4) + l6*np.cos(th4)*np.sin(th2)*np.sin(th5) + l7*np.cos(th6)*np.sin(th2)*np.sin(th4) + l7*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.cos(th6) - l6*np.cos(th2)*np.cos(th3)*np.sin(th4)*np.sin(th5) - l7*np.cos(th4)*np.cos(th5)*np.sin(th2)*np.sin(th6) + l7*np.cos(th2)*np.cos(th3)*np.cos(th5)*np.sin(th4)*np.sin(th6), l6*np.cos(th5)*np.sin(th2)*np.sin(th4) - l6*np.cos(th2)*np.sin(th3)*np.sin(th5) + l6*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.cos(th5) + l7*np.cos(th2)*np.cos(th5)*np.sin(th3)*np.sin(th6) + l7*np.sin(th2)*np.sin(th4)*np.sin(th5)*np.sin(th6) + l7*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.sin(th5)*np.sin(th6), l7*np.cos(th4)*np.sin(th2)*np.sin(th6) - l7*np.cos(th2)*np.cos(th3)*np.sin(th4)*np.sin(th6) + l7*np.cos(th2)*np.cos(th6)*np.sin(th3)*np.sin(th5) - l7*np.cos(th5)*np.cos(th6)*np.sin(th2)*np.sin(th4) - l7*np.cos(th2)*np.cos(th3)*np.cos(th4)*np.cos(th5)*np.cos(th6), 0]]
+
     return jacob
 
 # given pillar base coord, center and radius to make sphere, check if sphere collides with cylinder (pillar)
@@ -299,11 +299,11 @@ def IK(goal, q, spots, filled, origins):
 
     qOld = [0,0,0,0,0,0,0] # default configuration # MAY NEED TO CHANGE THIS
     count = 0
-    threshold = 3000
+    threshold = 2000
     alpha = 0.8
     if plotMe:
         with moviewriter.saving(fig, 'IKsimulation.gif', dpi=100):
-            while np.linalg.norm(np.subtract(qOld, q)) > 0.0005 and count < threshold:
+            while np.linalg.norm(np.subtract(qOld, q)) > 0.005 and count < threshold:
                 # print(np.linalg.norm(np.subtract(qOld, q)))
                 count = count + 1
 
@@ -336,6 +336,7 @@ def IK(goal, q, spots, filled, origins):
 
     else:
         while np.linalg.norm(np.subtract(qOld, q)) > 0.005 and count < threshold:
+
             # print(np.linalg.norm(np.subtract(qOld, q)))
             count = count + 1
             # goal = tf.convert_to_tensor(goal)
@@ -353,7 +354,6 @@ def IK(goal, q, spots, filled, origins):
             collide, pt = checkCollision(p, occupied, origins)
             # if collides, return that it collided
 
-            # NEVER COLLIDES. UNCOMMENT TO HAVE COLLISION
             if collide:
                 return -2, q, p  # collision, failed
 
@@ -364,6 +364,9 @@ def IK(goal, q, spots, filled, origins):
     if count < threshold and printMe:
         print("Success!")
         print(p)
+    if count == threshold:
+        print("Exceeded thresh:")
+        return -1, q, p
     return 1, q, p
 
     #print(count)
@@ -377,15 +380,30 @@ if __name__ == "__main__":
     # plotMe = True
     count = 0
     if plotMe:
-        spots, filled, origins = tower.build()  # all spots, binary array of occupied or not, origins
-        # based on spots, pick one of the unfilled ones from the top floor as a goal
-        goal = [-1]
-        while goal[0] == -1 and count < 100:
-            goal = getGoal(spots, filled)
-            count += 1
-        if count == 100:
-            print("oops")
-            sys.exit()
+        # spots, filled, origins = tower.build()  # all spots, binary array of occupied or not, origins
+        # # based on spots, pick one of the unfilled ones from the top floor as a goal
+        # goal = [-1]
+        # while goal[0] == -1 and count < 100:
+        #     goal = getGoal(spots, filled)
+        #     count += 1
+        # if count == 100:
+        #     print("oops")
+        #     sys.exit()
+
+        num = 1000
+        yAx = "Rewards"
+        ver = str(num) + "_"
+        fileName = "TowerModels" + str(num) + ".txt"
+        f = open(fileName, 'rb')
+        temp = pickle.load(f)
+        f.close()
+        spots = temp[0]
+        filled = temp[1]
+        origins = temp[2]
+        goal = temp[3]
+        occupied = tower.getOccupied(spots, filled)
+
+
         # goal = [-230,-504,120]
         #goal = [-1, 1, -1]
         print("Goal " + str(goal))

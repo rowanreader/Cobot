@@ -46,7 +46,7 @@ def simulate(tower, addons=None):
     if clientID!=-1:
         # Now try to retrieve data in a blocking fashion (i.e. a service call):
 
-        sim.simxSetBooleanParameter(clientID, sim.sim_boolparam_display_enabled, False, sim.simx_opmode_blocking)  # disable gpu
+        # sim.simxSetBooleanParameter(clientID, sim.sim_boolparam_display_enabled, False, sim.simx_opmode_blocking)  # disable gpu
         res, objs=sim.simxGetObjects(clientID, sim.sim_handle_all, sim.simx_opmode_blocking)
         if res != sim.simx_return_ok:
             print ('Remote API function call returned with error code: ', res)
@@ -85,7 +85,7 @@ def simulate(tower, addons=None):
                 dists = [getDist(i, origin) for i in tile.spots]
                 sortedPillars = [i for _, i in sorted(zip(dists, tile.spots))]
                 sortedFilled = [i for _, i in sorted(zip(dists, tile.filled))]
-
+                pillarLast = False
                 for (binary, pillar) in zip(sortedFilled, sortedPillars):
                     if binary:
                         newPillar = sim.simxCopyPasteObjects(clientID, [pillarHandle], sim.simx_opmode_blocking)[1][0]
@@ -98,6 +98,7 @@ def simulate(tower, addons=None):
                         parentTiles.append(newTile)
                         # print(location)
                         sim.simxSetObjectPosition(clientID, newPillar, sim_handle_parent, location, sim.simx_opmode_blocking)
+                        pillarLast = True
                     # time.sleep(0.8)
 
         # print("Out with the old!")
@@ -114,9 +115,10 @@ def simulate(tower, addons=None):
                     pillarHandles.append(newPillar)
                     parentTiles.append(newTile)
                     pillarLocations.append(location)
-                    # must use world coords for addons, because hard to keep track of parent
+                    # uses local coords, just add to most recent tile
                     sim.simxSetObjectPosition(clientID, newPillar, sim_handle_parent, location, sim.simx_opmode_blocking)
-                    time.sleep(0.5)
+                    time.sleep(0.3)
+                    pillarLast = True # check whether a pillar was placed last
                 elif i[0] == 1:  # tile
                     tile = i[1]
                     newestTile = tile
@@ -138,6 +140,7 @@ def simulate(tower, addons=None):
                     quat2 = [quat.x, quat.y, quat.z, quat.w]
                     sim.simxSetObjectQuaternion(clientID, newTile, -1, quat2, sim.simx_opmode_blocking)
                     sim.simxSetObjectPosition(clientID, newTile, -1, origin, sim.simx_opmode_blocking)
+                    pillarLast = False
                 # time.sleep(1)
     else:
         print ('Failed connecting to remote API server')
@@ -152,10 +155,7 @@ def simulate(tower, addons=None):
     collapsed = 0
     # check distances of pillars
 
-    pos = sim.simxGetObjectOrientation(clientID, newTile, -1, sim.simx_opmode_blocking)[1]
-    # check angle of top tile. If it has pillar on it and angle is bad, collapsed. If no pillars then fine
-    if np.abs(pos[0]) + np.abs(pos[1]) > 0.1 and 1 in newestTile.filled:
-        collapsed = 1
+    time.sleep(0.1)
     count = 0
     # print(pillarHandles)
     # print(pillarLocations)
@@ -168,15 +168,31 @@ def simulate(tower, addons=None):
             pos = sim.simxGetObjectPosition(clientID, i, sim_handle_parent, sim.simx_opmode_blocking)
             # print(pos)
             # print(pillarLocations[count])
+            time.sleep(0.3)
             dist = np.sqrt((pillarLocations[count][0] - pos[1][0]) ** 2 + (pillarLocations[count][1] - pos[1][1]) ** 2)
             # print(dist)
             # print()
             if dist > 0.1:
                 collapsed = 1
-            count += 1
+                sim.simxStopSimulation(clientID, sim.simx_opmode_blocking)
+                sim.simxFinish(clientID)
+                return collapsed
+        count += 1
+
+    pos = sim.simxGetObjectOrientation(clientID, newTile, -1, sim.simx_opmode_blocking)[1]
+    # # check angle of top tile. If it has pillar on it and angle is bad, collapsed. If no pillars then fine
+    if np.abs(pos[0]) + np.abs(pos[1]) > 0.1:
+        collapsed = 1
+        sim.simxStopSimulation(clientID, sim.simx_opmode_blocking)
+        sim.simxFinish(clientID)
+        return collapsed
+
 
     if actualPos[1][2] / initialPos[2] <= thresh and len(tower) != 1:
         collapsed = 1
+        sim.simxStopSimulation(clientID, sim.simx_opmode_blocking)
+        sim.simxFinish(clientID)
+        return collapsed
         # print(actualPos[1][2] / initialPos[2])
 
 

@@ -75,7 +75,7 @@ def simulate(tower):
                 sim.simxSetObjectPosition(clientID, newTile, -1, origin, sim.simx_opmode_blocking)
                 # rotation
                 # for each tile, fill pillars
-                time.sleep(1)
+                # time.sleep(1)
                 sim_handle_parent = newTile
 
                 # print("Pillars")
@@ -96,7 +96,7 @@ def simulate(tower):
                         parentTiles.append(newTile)
                         # print(location)
                         sim.simxSetObjectPosition(clientID, newPillar, sim_handle_parent, location, sim.simx_opmode_blocking)
-                    time.sleep(0.8)
+                    time.sleep(0.1)
 
 
                 # sys.exit()
@@ -124,7 +124,7 @@ def simulate(tower):
     else:
         print('Failed connecting to remote API server')
 
-    time.sleep(3)
+    time.sleep(0.5)
     # print("Angles:")
     # angles = sim.simxGetObjectOrientation(clientID, handle, -1, sim.simx_opmode_blocking)[1]
     # print(np.rad2deg(angles))
@@ -140,8 +140,13 @@ def simulate(tower):
     # print(pillarHandles)
     # print(pillarLocations)
     # print("Distances:")
-    pos = sim.simxGetObjectOrientation(clientID, newTile, -1, sim.simx_opmode_blocking)
     # print(pos)
+
+    pos = sim.simxGetObjectOrientation(clientID, newTile, -1, sim.simx_opmode_blocking)[1]
+    if np.abs(pos[0]) + np.abs(pos[1]) > 0.1:
+        collapsed = 1
+
+
     for i in pillarHandles:
         sim_handle_parent = parentTiles[count]
         pos = sim.simxGetObjectPosition(clientID, i, sim_handle_parent, sim.simx_opmode_blocking)
@@ -158,8 +163,10 @@ def simulate(tower):
         collapsed = 1
         # print(actualPos[1][2]/initialPos[2])
 
-    if collapsed:
-        print("Collapsed!")
+
+
+    # if collapsed:
+    #     print("Collapsed!")
 
     # i = "Tile05"
     # # print(sim.simxCheckCollision(clientID, 0, 1, sim.simx_opmode_streaming))
@@ -184,7 +191,7 @@ def simulate(tower):
     # Now close the connection to CoppeliaSim:
     sim.simxStopSimulation(clientID, sim.simx_opmode_blocking)
     sim.simxFinish(clientID)
-    print('Program ended')
+    # print('Program ended')
     return collapsed
 
 if __name__ == "__main__":

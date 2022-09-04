@@ -13,6 +13,8 @@ from scipy.spatial import ConvexHull
 import matplotlib.pyplot as plt
 import SawyerSim
 import PhysicsConnect
+from stable_baselines3 import SAC
+
 
 printstuff = False
 rad = 10
@@ -76,6 +78,22 @@ def closestCluster(point, clusters):
         count += 1
     return cluster
 
+
+
+# takes in coords and id of new tile, uses tile placement AI to determine origin
+def getOrigin(spots, id):
+    state = np.zeros(11)
+    index = 0
+    for spot in spots:
+        state[index:index+2] = spot
+        index += 2
+
+    state[10] = id
+    state = [x/50 for x in state]
+    # based on local coords
+    model = SAC.load("SAC1000_TilePlace_best/best_model")
+    action, _states2 = model.predict(state, deterministic=False)
+    return action
 
 # takes in list of coordinates, binary list representing which are filled, and the number of clusters to find, finds most balanced set
 
@@ -396,7 +414,7 @@ def build():
     # firstFloors = [tiles[firstFloorId[0]]]
     if printstuff == True:
         print(firstFloorId)
-    origin1 = [[500, 100], [600, 300], [700, 0]]  # mm from origin of world coord
+    origin1 = [[0, 0], [600, 300], [700, 0]]  # mm from origin of world coord
     count = 0
     for i in firstFloors:
         i.origin = np.append(origin1[count], getHeight(0))
@@ -405,9 +423,14 @@ def build():
     origins = [origin1]
 
     # randomly choose level (1, 2, 3)
-    levels = random.sample(range(2, 4), 1)[0]  # either 2 or 3
+    # levels = random.randint(1, 3)  # either 1, 2 or 3
+    choices = [1, 2, 3]
+    freq = [0.1, 0.4, 0.5] # frequency of choosing levels
+    levels =  random.choices(choices, freq, k=1)[0]
+
+
     # print(levels)
-    levels = 2
+    # levels = 2
     # levels = 1
     if printstuff == True:
         print("Going up to level " + str(levels))
@@ -440,7 +463,7 @@ def build():
     # here 1 refers to the level number, not the tile number
     if levels == 1:
         # pick number between 0 and the number of pillars
-        numChosen1 = random.sample(range(0, numPillars1), 1)[0]
+        numChosen1 = random.sample(range(0, numPillars1-1), 1)[0]
 
     elif levels == 2:
         # numChosen1 = random.sample(range(numPillars1 // 2 + 1, numPillars1), 1)[0]  # limit the number of pillars to be between half and all
@@ -487,12 +510,13 @@ def build():
         data = tilesData[secondFloorId[0]]
         # must reinstantiate
         secondFloors = [Tile(data[0], data[1], outline=data[2], colours=data[3])]
-        origin2 = getClusters(firstSpotsWorld, filled1, 1)
-
+        # origin2 = getClusters(firstSpotsWorld, filled1, 1)
+        temp = getOrigin(firstFloors[0].spots, secondFloorId[0])
+        origin2 = [[temp[0], temp[1]]]
         origin2[0][0] += shift[1][0]
         origin2[0][1] += shift[1][1]
 
-        print(origin2)
+        # print(origin2)
         # origin2 = origin1
         count = 0
         for i in secondFloors:
@@ -503,8 +527,9 @@ def build():
             print("Level 2 origins: " + str(origin2))
 
         # given a tile, origin (centriod) and POS, find rotation of max overlap using convexhull
-        angle = getRotation(secondFloors[0], origin2, firstSpotsWorld)
-        angle += rots[1]
+        # angle = getRotation(secondFloors[0], origin2, firstSpotsWorld)
+        # angle += rots[1]
+        angle = temp[2]
         secondFloors[0].rotation = angle  # this is actually the most recent angle from 1st floor
         rotate = getRotateMat(angle)
         # choose origin in center of triangle of pillars??? Given pillars and number of 'clusters' find centroids
@@ -562,7 +587,9 @@ def build():
         # must reinstantiate
         thirdFloors = [Tile(data[0], data[1], outline=data[2], colours=data[3])]
 
-        origin3 = getClusters(secondSpotsWorld, filled2, 1)
+        temp = getOrigin(secondFloors[0].spots, thirdFloorId[0])
+        origin3 = [[temp[0], temp[1]]]
+        # origin3 = getClusters(secondSpotsWorld, filled2, 1)
         origin3[0][0] += shift[2][0]
         origin3[0][1] += shift[2][1]
 
@@ -577,8 +604,9 @@ def build():
         # choose origin in center of triangle of pillars??? Given pillars and number of 'clusters' find centroids
         # orient so no collisions
         thirdSpotsWorld = []
-        angle = getRotation(thirdFloors[0], origin3, secondSpotsWorld)
-        angle += rots[2]
+        # angle = getRotation(thirdFloors[0], origin3, secondSpotsWorld)
+        # angle += rots[2]
+        angle = temp[2]
         thirdFloors[0].rotation = angle
         rotate = getRotateMat(angle)
         # place 1st floor of 3rd level in neutral
@@ -586,8 +614,6 @@ def build():
             tempSpot = tupleTransform(spot, origin3[0], rotate)
             thirdSpotsWorld.append(tempSpot)
             thirdFloors[0].worldSpots.append(np.append(tempSpot, getHeight(2)))
-
-
 
         allWorldSpots.append(thirdSpotsWorld)
         if printstuff == True:
@@ -637,7 +663,7 @@ def build():
                 print(j.worldSpots)
                 print(j.filled)
                 print()
-    print([len(i[0].worldSpots) for i in towerTiles])
+    # print([len(i[0].worldSpots) for i in towerTiles])
     return allWorldSpots, allFilled, origins, towerTiles
 
 
@@ -659,8 +685,9 @@ def build():
 #     print(e)
 
 if __name__ == "__main__":
-    numTowers = 15 # 224 towers saved out of 1000
-    fileName = "MinTowerSim_" + str(numTowers) + ".txt"
+    numTowers = 300  # 317 towers saved out of 1000
+    # fileName = "TestTowerSim_" + str(numTowers) + ".txt"
+    fileName = "TestTowerSim_" + str(numTowers) + ".txt"
     file = open(fileName, 'wb')
     count = 0
     for _ in range(numTowers):
@@ -675,9 +702,9 @@ if __name__ == "__main__":
         # check that it can be built in coppelia:
         collapsed = PhysicsConnect.simulate(tower)
         if collapsed: # try 1 more time
-            collapsed = PhysicsConnect.simulate(tower)
-            if collapsed:
-                print("Discarded")
+            # collapsed = PhysicsConnect.simulate(tower)
+            # if collapsed:
+            print("Discarded")
         # print(tower[0][0].worldSpots)
         # print(tower[-1][0].worldSpots)
         if not collapsed:
@@ -685,9 +712,9 @@ if __name__ == "__main__":
             pickle.dump([tower], file)
             print("Saved!")
             count += 1
-
-    print(count)
     file.close()
+    print(count)
+
 
 # for a given tower that is missing the colour parameter, add it in
 # def tempTransfer(tower):

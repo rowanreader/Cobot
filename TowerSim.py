@@ -211,7 +211,7 @@ def build():
     firstFloors = [tiles[firstFloorId[0]], tiles[firstFloorId[1]], tiles[firstFloorId[2]]]
     if printstuff == True:
         print(firstFloorId)
-    origin1 = [(700, 380), (800, 380), (770, 440)]  # mm from origin of world coord
+    origin1 = [(200, 280), (300, 280), (370, 240)]  # mm from origin of world coord
     count = 0
     for i in firstFloors:
         i.origin = origin1[count]

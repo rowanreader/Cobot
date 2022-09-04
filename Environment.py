@@ -103,7 +103,7 @@ class Environment(gym.Env):
         # print("Final" + str(final))
         return np.float32(np.reshape(final, (165,)))#/1000def minConvert(self,occupied, origins, goal):
         # return [goal, self.endPoint]
-        return np.float32(np.append(goal, self.endPoint)/1000)  # CHANGE BACK
+        # return np.float32(np.append(goal, self.endPoint)/1000)  # CHANGE BACK
 
 
     # takes in occupied coordinates, origin coordinates, and goal coordinate
@@ -143,7 +143,7 @@ class Environment(gym.Env):
 
     # reward must increase the closer it gets to goal too
     def getReward(self, action):
-        thresh = 30 # if within 30 mm close enough
+        thresh = 50 # if within 30 mm close enough
         outcome = self.outcome
         # default -1 for step
         if outcome == -1: # fail
@@ -162,6 +162,7 @@ class Environment(gym.Env):
             # alpha = -0.4 # lesser punishment
             alpha = -1
             dist = self.getDist(action)
+            # if dist < 5:
             # return np.float32(alpha * dist)
             return np.float32(alpha * dist)
         # return -2500 # large negative reward, to make it unattractive to insta-fail
@@ -226,12 +227,16 @@ class Environment(gym.Env):
     # state is numpy array, reward is a float64, and endFlag is a bool
     # will have to modify state
     # applies action to self.observation_space to generate new state
+    # IK step
     def step2(self, action): # carry out action according to state
         while True: # only want to run once, but do need to get goal
             # outcome is 0 (error), -1 (failure), 1 (success)
             # temp should be same as action
+            # print("enter")
             self.outcome, self.arm, temp = SawyerSim.IK(action, self.arm, self.spots, self.filled, self.origins)
+            # print(self.outcome)
             if self.outcome != 0:  # should break vast majority of time
+                # print("Break!")
                 break
 
         self.stepCount += 1
@@ -247,6 +252,7 @@ class Environment(gym.Env):
 
         # could probably just return self??? but system wants it like this
         # total observation includes both octomap and joint configurations - will need to join better probably
+        # print(self.stepCount)
         return np.float32(self.state), np.float32(reward), self.endFlag, info
 
 

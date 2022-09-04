@@ -151,7 +151,7 @@ class Tile:
         self.rotation = rotation
         self.origin = origin
         self.worldSpots = []  # based on rotation and level
-        self.filled = []  # binary array of filled or not filled, corresponding to worldSpots
+        self.filled = [0 for _ in self.spots]  # binary array of filled or not filled, corresponding to worldSpots
         self.colours = colours
         self.outline = outline
 
@@ -240,6 +240,7 @@ tilesData = [tileData01, tileData02, tileData03, tileData04, tileData05, tileDat
              tileData10, tileData11, tileData12, tileData13, tileData14, tileData15, tileData16, tileData17, tileData18]
 # get function, returns tile object based on index
 def getTile(num):
+    # print(num)
     data = tilesData[num]
     tile = Tile(data[0], data[1], outline=data[2], colours=data[3])
     return tile
